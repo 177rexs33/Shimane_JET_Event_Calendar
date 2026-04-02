@@ -22,9 +22,3 @@ export enum Region {
   OKI = 'Oki'
 }
 
-export interface DayData {
-  date: Date;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-  events: CalendarEvent[];
-}
