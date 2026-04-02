@@ -4,6 +4,7 @@ import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-ch
 import { 
   getAuth,
   signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
   onAuthStateChanged, 
   signOut, 
   setPersistence,
@@ -117,12 +118,33 @@ onAuthStateChanged(auth, async (user) => {
 
   isAuthenticating = true;
   try {
-    await signInAnonymously(auth);
+    // Fetch IP address
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    const ip = data.ip;
+    
+    // Create deterministic email and password
+    const sanitizedIp = ip.replace(/\./g, '_').replace(/:/g, '_');
+    const email = `${sanitizedIp}@anonymous-ip.local`;
+    const password = `ip-auth-${sanitizedIp}-secret`;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (signInError: any) {
+      if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential' || signInError.code === 'auth/wrong-password') {
+        // Create the account if it doesn't exist
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        throw signInError;
+      }
+    }
   } catch (err: any) {
-    if (err.code === 'auth/network-request-failed') {
-      console.warn("Network request failed during anonymous auth.");
-    } else {
-      console.error("Error signing in anonymously:", err);
+    console.error("Error signing in with IP-based account:", err);
+    // Fallback to anonymous auth if IP fetch or email auth fails
+    try {
+      await signInAnonymously(auth);
+    } catch (anonErr) {
+      console.error("Fallback anonymous auth failed:", anonErr);
     }
   } finally {
     isAuthenticating = false;
