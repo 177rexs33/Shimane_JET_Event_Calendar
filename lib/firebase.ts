@@ -22,7 +22,8 @@ import {
   query, 
   where, 
   serverTimestamp,
-  setDoc
+  setDoc,
+  increment
 } from "firebase/firestore";
 import { CalendarEvent } from "../types";
 
@@ -107,9 +108,23 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
   }
 });
 
+export const db = getFirestore(app);
+
 let isAuthenticating = false;
 
 onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    try {
+      const visitorRef = doc(db, 'visitors', user.uid);
+      await setDoc(visitorRef, {
+        lastVisit: serverTimestamp(),
+        visitCount: increment(1)
+      }, { merge: true });
+    } catch (err) {
+      console.error("Error tracking visitor:", err);
+    }
+  }
+
   if (isAuthenticating) return;
   
   if (user) {
@@ -152,7 +167,6 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 export { signInWithEmailAndPassword, onAuthStateChanged, signOut };
-export const db = getFirestore(app);
 
 // Route new events based on status
 export const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
