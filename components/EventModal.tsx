@@ -190,22 +190,21 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
         
         let val = parseInt(localH, 10);
         if (isNaN(val) || localH === '') {
-            setLocalH('0');
-            const newVal = `0:${localM}`;
-            updateTime('0', localM);
+            setLocalH('00');
+            const paddedM = localM.padStart(2, '0');
+            const newVal = `00:${paddedM}`;
+            updateTime('00', paddedM);
             if (onBlur) onBlur(newVal);
             return;
         }
         
         const clamped = Math.min(23, Math.max(0, val));
-        let formatted = localH;
-        if (parseInt(localH, 10) !== clamped) {
-            formatted = clamped.toString();
-        }
+        const formatted = clamped.toString().padStart(2, '0');
+        const paddedM = localM.padStart(2, '0');
         
         setLocalH(formatted);
-        const newVal = `${formatted}:${localM}`;
-        updateTime(formatted, localM);
+        const newVal = `${formatted}:${paddedM}`;
+        updateTime(formatted, paddedM);
         if (onBlur) onBlur(newVal);
     };
 
@@ -224,22 +223,21 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
         
         let val = parseInt(localM, 10);
         if (isNaN(val) || localM === '') {
-            setLocalM('0');
-            const newVal = `${localH}:0`;
-            updateTime(localH, '0');
+            setLocalM('00');
+            const paddedH = localH.padStart(2, '0');
+            const newVal = `${paddedH}:00`;
+            updateTime(paddedH, '00');
             if (onBlur) onBlur(newVal);
             return;
         }
 
         const clamped = Math.min(59, Math.max(0, val));
-        let formatted = localM;
-        if (parseInt(localM, 10) !== clamped) {
-            formatted = clamped.toString();
-        }
+        const formatted = clamped.toString().padStart(2, '0');
+        const paddedH = localH.padStart(2, '0');
         
         setLocalM(formatted);
-        const newVal = `${localH}:${formatted}`;
-        updateTime(localH, formatted);
+        const newVal = `${paddedH}:${formatted}`;
+        updateTime(paddedH, formatted);
         if (onBlur) onBlur(newVal);
     };
 

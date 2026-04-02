@@ -141,19 +141,19 @@ export { signInWithEmailAndPassword, onAuthStateChanged, signOut };
 export const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
   try {
     const uid = auth.currentUser?.uid;
-    const eventWithTracking = { 
-      ...event, 
-      ...(uid ? { requesterUid: uid } : {}) 
-    };
 
     if (event.status === 'pending') {
         const docRef = await addDoc(collection(db, "pending_events"), {
-            ...eventWithTracking,
+            ...event,
+            userUid: uid,
             createdAt: serverTimestamp()
         });
         return docRef.id;
     } else {
-        const docRef = await addDoc(collection(db, "events"), eventWithTracking);
+        const docRef = await addDoc(collection(db, "events"), {
+            ...event,
+            userUid: uid
+        });
         return docRef.id;
     }
   } catch (e) {
@@ -257,15 +257,15 @@ export const updateEvent = async (event: CalendarEvent) => {
         await addDoc(collection(db, "pending_events"), {
             ...data,
             originalId: id,
-            createdAt: serverTimestamp(),
-            ...(uid ? { requesterUid: uid } : {})
+            userUid: uid,
+            createdAt: serverTimestamp()
         });
     } else {
         const { id, ...eventData } = event;
         const eventRef = doc(db, "events", id);
         await updateDoc(eventRef, {
-          ...eventData,
-          ...(uid ? { adminUid: uid } : {})
+            ...eventData,
+            adminUid: uid // If an admin updates directly
         } as any);
     }
   } catch (e) {
@@ -280,7 +280,8 @@ export const approvePendingEvent = async (event: CalendarEvent) => {
         await addDoc(collection(db, "events"), {
             ...data,
             status: 'approved',
-            ...(adminUid ? { adminUid } : {})
+            adminUid: adminUid,
+            approvedAt: serverTimestamp()
         });
         await deleteDoc(doc(db, "pending_events", id));
     } catch (e) {
@@ -298,7 +299,8 @@ export const approveEditedEvent = async (event: CalendarEvent) => {
         await setDoc(eventRef, {
             ...newData,
             status: 'approved',
-            ...(adminUid ? { adminUid } : {})
+            adminUid: adminUid,
+            approvedAt: serverTimestamp()
         });
         await deleteDoc(doc(db, "pending_events", id));
     } catch (e) {
@@ -313,8 +315,8 @@ export const rejectRequest = async (event: CalendarEvent) => {
         await addDoc(collection(db, "rejected_events"), {
             ...data,
             status: 'rejected',
-            rejectedAt: serverTimestamp(),
-            ...(adminUid ? { adminUid } : {})
+            adminUid: adminUid,
+            rejectedAt: serverTimestamp()
         });
         await deleteDoc(doc(db, "pending_events", id));
     } catch (e) {
@@ -329,7 +331,8 @@ export const restoreRejectedEvent = async (event: CalendarEvent) => {
         await addDoc(collection(db, "pending_events"), {
             ...data,
             status: event.originalData ? 'edited' : 'pending',
-            ...(adminUid ? { adminUid } : {})
+            restoredByAdminUid: adminUid,
+            restoredAt: serverTimestamp()
         });
         await deleteDoc(doc(db, "rejected_events", id));
     } catch (e) {
@@ -345,9 +348,9 @@ export const softDeleteEvent = async (event: CalendarEvent) => {
     await addDoc(collection(db, "deleted_events"), {
         ...data,
         originalId: id,
+        adminUid: adminUid,
         deletedAt: serverTimestamp(),
-        status: 'deleted',
-        ...(adminUid ? { adminUid } : {})
+        status: 'deleted'
     });
     // 2. Remove from active events collection
     await deleteDoc(doc(db, "events", id));
@@ -362,11 +365,11 @@ export const restoreDeletedEvent = async (event: CalendarEvent) => {
     const adminUid = auth.currentUser?.uid;
     
     // We need to restore it to the events collection
-    // If it had an originalId, we should try to use that, or just create a new one
     await addDoc(collection(db, "events"), {
         ...data,
         status: 'approved',
-        ...(adminUid ? { adminUid } : {})
+        restoredByAdminUid: adminUid,
+        restoredAt: serverTimestamp()
     });
     
     // Remove from deleted_events
