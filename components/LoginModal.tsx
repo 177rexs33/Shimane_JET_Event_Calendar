@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Modal } from './Modal';
-import { auth, signInWithEmailAndPassword } from '../lib/firebase';
+import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '../lib/firebase';
 import { Lock, User, Key, AlertCircle, Loader2 } from 'lucide-react';
 
 interface LoginModalProps {
@@ -29,13 +29,32 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
         setLoading(false);
         onLoginSuccess();
       })
-      .catch((err) => {
+      .catch(async (err) => {
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
+          try {
+            // Attempt to create the account if it doesn't exist
+            await createUserWithEmailAndPassword(auth, email, password);
+            setEmail('');
+            setPassword('');
+            setLoading(false);
+            onLoginSuccess();
+            return;
+          } catch (createErr: any) {
+            if (createErr.code === 'auth/email-already-in-use') {
+              // The account exists, so the password was just wrong
+              setError("Incorrect email or password.");
+            } else {
+              setError(createErr.message);
+            }
+            setLoading(false);
+            return;
+          }
+        }
+
         console.error("Login failed:", err.code, err.message);
         
         let errorMessage = "Incorrect email or password";
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-          errorMessage = "Incorrect email or password.";
-        } else if (err.code === 'auth/wrong-password') {
+        if (err.code === 'auth/wrong-password') {
           errorMessage = "Incorrect password.";
         } else if (err.code === 'auth/invalid-email') {
           errorMessage = "Invalid email format.";

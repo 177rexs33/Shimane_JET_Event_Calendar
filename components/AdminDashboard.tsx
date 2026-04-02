@@ -6,6 +6,7 @@ import {
     getRejectedEvents, 
     getEditedEvents, 
     getDeletedEvents,
+    getVisitorCount,
     approvePendingEvent, 
     approveEditedEvent, 
     rejectRequest,
@@ -14,7 +15,7 @@ import {
     hardDeleteEvent,
     hardDeleteRejectedEvent
 } from '../lib/firebase';
-import { Check, X, MapPin, Calendar as CalendarIcon, Loader2, ArrowRight, RotateCcw, FileText, Clock, Edit3, LayoutList, History, Trash2, AlertCircle } from 'lucide-react';
+import { Check, X, MapPin, Calendar as CalendarIcon, Loader2, ArrowRight, RotateCcw, FileText, Clock, Edit3, LayoutList, History, Trash2, AlertCircle, Users, Activity, BarChart2 } from 'lucide-react';
 import { formatFriendlyDate, formatTime, getRegionClasses } from '../utils/dateUtils';
 
 type Tab = 'new' | 'edits' | 'rejected' | 'deleted';
@@ -24,6 +25,7 @@ export const AdminDashboard: React.FC = () => {
   const [editedEvents, setEditedEvents] = useState<CalendarEvent[]>([]);
   const [rejectedEvents, setRejectedEvents] = useState<CalendarEvent[]>([]);
   const [deletedEvents, setDeletedEvents] = useState<CalendarEvent[]>([]);
+  const [visitorCount, setVisitorCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('new');
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
@@ -47,11 +49,16 @@ export const AdminDashboard: React.FC = () => {
       setDeletedEvents(events);
     });
 
+    const unsubscribeVisitors = getVisitorCount((count) => {
+      setVisitorCount(count);
+    });
+
     return () => {
         unsubscribePending();
         unsubscribeEdited();
         unsubscribeRejected();
         unsubscribeDeleted();
+        unsubscribeVisitors();
     };
   }, []);
 
@@ -157,8 +164,57 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-full">
+      {/* Analytics Overview */}
+      <div className="mx-4 md:mx-6 mt-4 md:mt-6 flex flex-wrap items-center gap-4">
+        {/* Visitor Count */}
+        <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit">
+          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <Users size={20} />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Unique Visitors</span>
+            <span className="text-lg font-bold text-gray-900 leading-none mt-0.5">{visitorCount.toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Current Date */}
+        <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit">
+          <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+            <CalendarIcon size={20} />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Current Date</span>
+            <span className="text-lg font-bold text-gray-900 leading-none mt-0.5">
+              {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+          </div>
+        </div>
+
+        {/* Placeholder 1 */}
+        <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit opacity-70">
+          <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+            <Activity size={20} />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Placeholder</span>
+            <span className="text-lg font-bold text-gray-900 leading-none mt-0.5">--</span>
+          </div>
+        </div>
+
+        {/* Placeholder 2 */}
+        <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit opacity-70">
+          <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+            <BarChart2 size={20} />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Placeholder</span>
+            <span className="text-lg font-bold text-gray-900 leading-none mt-0.5">--</span>
+          </div>
+        </div>
+      </div>
+
       {/* Tabs Header */}
-      <div className="flex items-center gap-1 p-1 bg-gray-100/80 rounded-xl mb-6 self-start md:self-auto overflow-x-auto w-full md:w-auto mx-4 md:mx-6 mt-4 md:mt-6 shrink-0 transition-colors duration-200">
+      <div className="flex items-center justify-center gap-1 p-1 bg-gray-100/80 rounded-xl mb-6 mx-auto overflow-x-auto w-fit max-w-[calc(100%-3rem)] mt-4 shrink-0 transition-colors duration-200">
         <button
             onClick={() => setActiveTab('new')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${

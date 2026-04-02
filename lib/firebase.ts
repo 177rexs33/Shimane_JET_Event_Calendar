@@ -4,7 +4,6 @@ import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-ch
 import { 
   getAuth,
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
   onAuthStateChanged, 
   signOut, 
   setPersistence,
@@ -123,46 +122,16 @@ onAuthStateChanged(auth, async (user) => {
     } catch (err) {
       console.error("Error tracking visitor:", err);
     }
-  }
-
-  if (isAuthenticating) return;
-  
-  if (user) {
-    return;
-  }
-
-  isAuthenticating = true;
-  try {
-    // Fetch IP address
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    const ip = data.ip;
-    
-    // Create deterministic email and password
-    const sanitizedIp = ip.replace(/\./g, '_').replace(/:/g, '_');
-    const email = `${sanitizedIp}@anonymous-ip.local`;
-    const password = `ip-auth-${sanitizedIp}-secret`;
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (signInError: any) {
-      if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential' || signInError.code === 'auth/wrong-password') {
-        // Create the account if it doesn't exist
-        await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        throw signInError;
-      }
-    }
-  } catch (err: any) {
-    console.error("Error signing in with IP-based account:", err);
-    // Fallback to anonymous auth if IP fetch or email auth fails
+  } else {
+    if (isAuthenticating) return;
+    isAuthenticating = true;
     try {
       await signInAnonymously(auth);
-    } catch (anonErr) {
-      console.error("Fallback anonymous auth failed:", anonErr);
+    } catch (err) {
+      console.error("Error signing in anonymously:", err);
+    } finally {
+      isAuthenticating = false;
     }
-  } finally {
-    isAuthenticating = false;
   }
 });
 
@@ -172,16 +141,19 @@ export { signInWithEmailAndPassword, onAuthStateChanged, signOut };
 export const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
   try {
     const uid = auth.currentUser?.uid;
-    const eventWithUid = { ...event, ...(uid ? { uid } : {}) };
+    const eventWithTracking = { 
+      ...event, 
+      ...(uid ? { requesterUid: uid } : {}) 
+    };
 
     if (event.status === 'pending') {
         const docRef = await addDoc(collection(db, "pending_events"), {
-            ...eventWithUid,
+            ...eventWithTracking,
             createdAt: serverTimestamp()
         });
         return docRef.id;
     } else {
-        const docRef = await addDoc(collection(db, "events"), eventWithUid);
+        const docRef = await addDoc(collection(db, "events"), eventWithTracking);
         return docRef.id;
     }
   } catch (e) {
@@ -266,6 +238,16 @@ export const getDeletedEvents = (onUpdate: (events: CalendarEvent[]) => void) =>
   return unsubscribe;
 };
 
+export const getVisitorCount = (onUpdate: (count: number) => void) => {
+  const q = query(collection(db, "visitors"));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    onUpdate(snapshot.size);
+  }, (error) => {
+    handleFirestoreError(error, OperationType.LIST, "visitors");
+  });
+  return unsubscribe;
+};
+
 export const updateEvent = async (event: CalendarEvent) => {
   try {
     const uid = auth.currentUser?.uid;
@@ -276,12 +258,15 @@ export const updateEvent = async (event: CalendarEvent) => {
             ...data,
             originalId: id,
             createdAt: serverTimestamp(),
-            ...(uid ? { uid } : {})
+            ...(uid ? { requesterUid: uid } : {})
         });
     } else {
         const { id, ...eventData } = event;
         const eventRef = doc(db, "events", id);
-        await updateDoc(eventRef, eventData as any);
+        await updateDoc(eventRef, {
+          ...eventData,
+          ...(uid ? { adminUid: uid } : {})
+        } as any);
     }
   } catch (e) {
     handleFirestoreError(e, OperationType.UPDATE, event.status === 'edited' ? 'pending_events' : `events/${event.id}`);
@@ -291,9 +276,11 @@ export const updateEvent = async (event: CalendarEvent) => {
 export const approvePendingEvent = async (event: CalendarEvent) => {
     try {
         const { id, ...data } = event;
+        const adminUid = auth.currentUser?.uid;
         await addDoc(collection(db, "events"), {
             ...data,
-            status: 'approved'
+            status: 'approved',
+            ...(adminUid ? { adminUid } : {})
         });
         await deleteDoc(doc(db, "pending_events", id));
     } catch (e) {
@@ -306,10 +293,12 @@ export const approveEditedEvent = async (event: CalendarEvent) => {
         const { id, originalId, originalData, createdAt, ...newData } = event as any;
         if (!originalId) throw new Error("Missing originalId for edited event");
 
+        const adminUid = auth.currentUser?.uid;
         const eventRef = doc(db, "events", originalId);
         await setDoc(eventRef, {
             ...newData,
-            status: 'approved'
+            status: 'approved',
+            ...(adminUid ? { adminUid } : {})
         });
         await deleteDoc(doc(db, "pending_events", id));
     } catch (e) {
@@ -320,10 +309,12 @@ export const approveEditedEvent = async (event: CalendarEvent) => {
 export const rejectRequest = async (event: CalendarEvent) => {
     try {
         const { id, ...data } = event;
+        const adminUid = auth.currentUser?.uid;
         await addDoc(collection(db, "rejected_events"), {
             ...data,
             status: 'rejected',
-            rejectedAt: serverTimestamp()
+            rejectedAt: serverTimestamp(),
+            ...(adminUid ? { adminUid } : {})
         });
         await deleteDoc(doc(db, "pending_events", id));
     } catch (e) {
@@ -334,9 +325,11 @@ export const rejectRequest = async (event: CalendarEvent) => {
 export const restoreRejectedEvent = async (event: CalendarEvent) => {
     try {
         const { id, ...data } = event;
+        const adminUid = auth.currentUser?.uid;
         await addDoc(collection(db, "pending_events"), {
             ...data,
-            status: event.originalData ? 'edited' : 'pending'
+            status: event.originalData ? 'edited' : 'pending',
+            ...(adminUid ? { adminUid } : {})
         });
         await deleteDoc(doc(db, "rejected_events", id));
     } catch (e) {
@@ -347,12 +340,14 @@ export const restoreRejectedEvent = async (event: CalendarEvent) => {
 export const softDeleteEvent = async (event: CalendarEvent) => {
   try {
     const { id, ...data } = event;
+    const adminUid = auth.currentUser?.uid;
     // 1. Add to deleted_events collection
     await addDoc(collection(db, "deleted_events"), {
         ...data,
         originalId: id,
         deletedAt: serverTimestamp(),
-        status: 'deleted'
+        status: 'deleted',
+        ...(adminUid ? { adminUid } : {})
     });
     // 2. Remove from active events collection
     await deleteDoc(doc(db, "events", id));
@@ -364,12 +359,14 @@ export const softDeleteEvent = async (event: CalendarEvent) => {
 export const restoreDeletedEvent = async (event: CalendarEvent) => {
   try {
     const { id, originalId, deletedAt, ...data } = event as any;
+    const adminUid = auth.currentUser?.uid;
     
     // We need to restore it to the events collection
     // If it had an originalId, we should try to use that, or just create a new one
     await addDoc(collection(db, "events"), {
         ...data,
-        status: 'approved'
+        status: 'approved',
+        ...(adminUid ? { adminUid } : {})
     });
     
     // Remove from deleted_events

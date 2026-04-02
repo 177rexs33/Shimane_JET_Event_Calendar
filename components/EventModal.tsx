@@ -154,7 +154,7 @@ interface TimeSelectProps {
 
 const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onComplete, onBlur, hasError }) => {
     // Ensure we have defaults, split safely
-    const [h = '00', m = '00'] = (value || '00:00').split(':');
+    const [h = '0', m = '0'] = (value || '0:0').split(':');
     const minuteRef = useRef<HTMLInputElement>(null);
     const isFocused = useRef(false);
 
@@ -165,7 +165,7 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
     useEffect(() => {
         // Only update from props if not currently editing (prevents overwriting user input)
         if (isFocused.current) return;
-        const [newH = '00', newM = '00'] = (value || '00:00').split(':');
+        const [newH = '0', newM = '0'] = (value || '0:0').split(':');
         
         // Update local state respecting the incoming value without stripping zeros
         // The parent or onBlur logic handles the "09" vs "9" formatting preference
@@ -189,12 +189,19 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
         isFocused.current = false;
         
         let val = parseInt(localH, 10);
-        if (isNaN(val) || localH === '') val = 0;
+        if (isNaN(val) || localH === '') {
+            setLocalH('0');
+            const newVal = `0:${localM}`;
+            updateTime('0', localM);
+            if (onBlur) onBlur(newVal);
+            return;
+        }
         
         const clamped = Math.min(23, Math.max(0, val));
-        
-        // Always pad with leading zero on blur to ensure HH format
-        const formatted = clamped.toString().padStart(2, '0');
+        let formatted = localH;
+        if (parseInt(localH, 10) !== clamped) {
+            formatted = clamped.toString();
+        }
         
         setLocalH(formatted);
         const newVal = `${formatted}:${localM}`;
@@ -216,12 +223,19 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
         isFocused.current = false;
         
         let val = parseInt(localM, 10);
-        if (isNaN(val) || localM === '') val = 0;
+        if (isNaN(val) || localM === '') {
+            setLocalM('0');
+            const newVal = `${localH}:0`;
+            updateTime(localH, '0');
+            if (onBlur) onBlur(newVal);
+            return;
+        }
 
         const clamped = Math.min(59, Math.max(0, val));
-        
-        // Always pad with leading zero on blur to ensure MM format
-        const formatted = clamped.toString().padStart(2, '0');
+        let formatted = localM;
+        if (parseInt(localM, 10) !== clamped) {
+            formatted = clamped.toString();
+        }
         
         setLocalM(formatted);
         const newVal = `${localH}:${formatted}`;
@@ -231,8 +245,6 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         isFocused.current = true;
-        // Select all text on focus to make replacement easy
-        setTimeout(() => e.target.select(), 0);
     };
 
     return (
@@ -407,10 +419,10 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   // Helper to ensure proper time formatting
   const padTime = (timeStr: string) => {
-      const parts = (timeStr || '00:00').split(':');
-      const h = parts[0] || '00';
-      const m = parts[1] || '00';
-      return `${h.padStart(2, '00')}:${m.padStart(2, '00')}`;
+      const parts = (timeStr || '0:0').split(':');
+      const h = parts[0] || '0';
+      const m = parts[1] || '0';
+      return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
   };
 
   const handleStartTimeBlur = (currentStartTime: string) => {

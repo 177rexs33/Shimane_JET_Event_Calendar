@@ -87,8 +87,7 @@ export const toDateString = (date: Date): string => {
 };
 
 export const toTimeString = (date: Date): string => {
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getHours()}:${date.getMinutes()}`;
 };
 
 export const formatFriendlyDate = (dateStr: string): string => {
