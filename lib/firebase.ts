@@ -4,7 +4,6 @@ import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-ch
 import { 
   getAuth,
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
   onAuthStateChanged, 
   signOut, 
   setPersistence,
@@ -107,99 +106,24 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
   }
 });
 
-const getIpAddress = async () => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.ip;
-  } catch (e) {
-    console.warn("Could not fetch IP address (user may be offline or blocked). Falling back to standard anonymous auth.");
-    return null;
-  }
-};
-
-const getIpCredentials = (ip: string) => {
-  const sanitizedIp = ip.replace(/\./g, '-').replace(/:/g, '-');
-  return {
-    email: `ip-${sanitizedIp}@anonymous-ip.local`,
-    password: `ip-auth-${ip}`
-  };
-};
-
-const handleIpAuth = async (ip: string) => {
-  const { email, password } = getIpCredentials(ip);
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (error: any) {
-    if (error.code === 'auth/network-request-failed') {
-      console.warn("Network request failed during IP auth. User might be offline.");
-      return;
-    }
-    if (['auth/user-not-found', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(error.code)) {
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-      } catch (createError: any) {
-        if (createError.code === 'auth/network-request-failed') {
-          console.warn("Network request failed during IP user creation.");
-          return;
-        }
-        if (createError.code === 'auth/email-already-in-use') {
-          await signInWithEmailAndPassword(auth, email, password);
-        } else {
-          console.error("Error creating IP user:", createError);
-          await signInAnonymously(auth).catch(e => console.warn("Anonymous auth failed:", e.message));
-        }
-      }
-    } else {
-      console.error("Error signing in IP user:", error);
-      await signInAnonymously(auth).catch(e => console.warn("Anonymous auth failed:", e.message));
-    }
-  }
-};
-
 let isAuthenticating = false;
 
 onAuthStateChanged(auth, async (user) => {
   if (isAuthenticating) return;
-
-  const ip = await getIpAddress();
   
   if (user) {
-    if (user.email?.endsWith('@anonymous-ip.local') && ip) {
-      const { email: expectedEmail } = getIpCredentials(ip);
-      if (user.email !== expectedEmail) {
-        isAuthenticating = true;
-        try {
-          await signOut(auth);
-        } catch (e) {
-          console.warn("Sign out failed:", e);
-        }
-        isAuthenticating = false;
-        return;
-      }
-    }
     return;
   }
 
   isAuthenticating = true;
   try {
-    if (ip) {
-      await handleIpAuth(ip);
+    await signInAnonymously(auth);
+  } catch (err: any) {
+    if (err.code === 'auth/network-request-failed') {
+      console.warn("Network request failed during anonymous auth.");
     } else {
-      await signInAnonymously(auth).catch(e => {
-        if (e.code === 'auth/network-request-failed') {
-          console.warn("Network request failed during anonymous auth.");
-        } else {
-          console.error("Error signing in anonymously:", e);
-        }
-      });
+      console.error("Error signing in anonymously:", err);
     }
-  } catch (err) {
-    console.error("Fallback auth failed", err);
   } finally {
     isAuthenticating = false;
   }

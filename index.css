@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-blue-50: #f0f7ff;
+  --color-blue-100: #e0f0fe;
+  --color-blue-200: #bae2fd;
+  --color-blue-300: #7ccbfd;
+  --color-blue-400: #36b2fa;
+  --color-blue-500: #0c9aeb;
+  --color-blue-600: #005c97;
+  --color-blue-700: #004a7a;
+  --color-blue-800: #003d63;
+  --color-blue-900: #003250;
+  --color-blue-950: #002035;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+}
+
+/* Custom Scrollbar for events list */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
+}
+
+/* Hide native calendar picker */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+input[type="datetime-local"]::-webkit-inner-spin-button,
+input[type="datetime-local"]::-webkit-clear-button {
+  display: none;
+}
