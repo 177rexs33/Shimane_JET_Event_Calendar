@@ -19,21 +19,21 @@ export const MonthYearSelector: React.FC<MonthYearSelectorProps> = ({ currentDat
 
   return (
       <div 
-        className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-4 w-64 z-50 animate-in fade-in zoom-in-95 duration-200"
+        className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-xl border border-gray-100 p-4 w-64 z-50 animate-in fade-in zoom-in-95 duration-200"
       >
         <div className="flex items-center justify-between mb-4">
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setViewYear(y => y - 1); }}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+            className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
           >
             <ChevronLeft size={20} />
           </button>
-          <span className="text-lg font-bold text-gray-800 dark:text-gray-100 select-none">{viewYear}</span>
+          <span className="text-lg font-bold text-gray-800 select-none">{viewYear}</span>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setViewYear(y => y + 1); }}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+            className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
           >
             <ChevronRight size={20} />
           </button>
@@ -48,7 +48,7 @@ export const MonthYearSelector: React.FC<MonthYearSelectorProps> = ({ currentDat
                 p-2 rounded-lg text-sm font-medium transition-colors
                 ${index === currentDate.getMonth() && viewYear === currentDate.getFullYear()
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  : 'text-gray-700 hover:bg-gray-100'
                 }
               `}
             >

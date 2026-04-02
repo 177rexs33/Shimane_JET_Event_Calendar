@@ -114,9 +114,9 @@ const DateInput: React.FC<DateInputProps> = ({ dateStr, onChange, onFocus, input
                 onChange={handleDayChange}
                 onBlur={handleDayBlur}
                 onFocus={handleFocus}
-                className={`bg-transparent outline-none font-medium text-center w-8 rounded transition-colors p-0 placeholder-gray-400 dark:placeholder-gray-500 ${hasError ? 'text-red-700 dark:text-red-400 focus:bg-red-100 dark:focus:bg-red-900/30' : 'text-gray-700 dark:text-gray-200 focus:bg-blue-200 dark:focus:bg-blue-900/50'}`}
+                className={`bg-transparent outline-none font-medium text-center w-8 rounded transition-colors p-0 placeholder-gray-400 ${hasError ? 'text-red-700 focus:bg-red-100' : 'text-gray-700 focus:bg-blue-200'}`}
             />
-            <span className={`select-none ${hasError ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'}`}>/</span>
+            <span className={`select-none ${hasError ? 'text-red-400' : 'text-gray-400'}`}>/</span>
             <input
                 ref={monthRef}
                 type="text"
@@ -126,9 +126,9 @@ const DateInput: React.FC<DateInputProps> = ({ dateStr, onChange, onFocus, input
                 onChange={handleMonthChange}
                 onBlur={handleMonthBlur}
                 onFocus={handleFocus}
-                className={`bg-transparent outline-none font-medium text-center w-8 rounded transition-colors p-0 placeholder-gray-400 dark:placeholder-gray-500 ${hasError ? 'text-red-700 dark:text-red-400 focus:bg-red-100 dark:focus:bg-red-900/30' : 'text-gray-700 dark:text-gray-200 focus:bg-blue-200 dark:focus:bg-blue-900/50'}`}
+                className={`bg-transparent outline-none font-medium text-center w-8 rounded transition-colors p-0 placeholder-gray-400 ${hasError ? 'text-red-700 focus:bg-red-100' : 'text-gray-700 focus:bg-blue-200'}`}
             />
-            <span className={`select-none ${hasError ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'}`}>/</span>
+            <span className={`select-none ${hasError ? 'text-red-400' : 'text-gray-400'}`}>/</span>
             <input
                 ref={yearRef}
                 type="text"
@@ -137,7 +137,7 @@ const DateInput: React.FC<DateInputProps> = ({ dateStr, onChange, onFocus, input
                 value={y}
                 onChange={handleYearChange}
                 onFocus={handleFocus}
-                className={`bg-transparent outline-none font-medium text-center w-12 rounded transition-colors p-0 placeholder-gray-400 dark:placeholder-gray-500 ${hasError ? 'text-red-700 dark:text-red-400 focus:bg-red-100 dark:focus:bg-red-900/30' : 'text-gray-700 dark:text-gray-200 focus:bg-blue-200 dark:focus:bg-blue-900/50'}`}
+                className={`bg-transparent outline-none font-medium text-center w-12 rounded transition-colors p-0 placeholder-gray-400 ${hasError ? 'text-red-700 focus:bg-red-100' : 'text-gray-700 focus:bg-blue-200'}`}
             />
         </div>
     );
@@ -236,8 +236,8 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
     };
 
     return (
-        <div className={`flex items-center border rounded-lg h-10 w-full sm:w-36 relative transition-all group ${hasError ? 'border-red-300 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'}`}>
-             <div className={`absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none z-10 ${hasError ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'}`}>
+        <div className={`flex items-center border rounded-lg h-10 w-full sm:w-36 relative transition-all group ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'}`}>
+             <div className={`absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none z-10 ${hasError ? 'text-red-400' : 'text-gray-400'}`}>
                 <Clock size={16} />
             </div>
             <div className="flex items-center pl-8 pr-2 w-full justify-between">
@@ -250,9 +250,9 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
                     onBlur={handleHourBlur}
                     onFocus={handleFocus}
                     placeholder="HH"
-                    className={`bg-transparent outline-none font-medium text-center w-10 rounded transition-colors p-0 placeholder-gray-400 dark:placeholder-gray-500 ${hasError ? 'text-red-700 dark:text-red-400 focus:bg-red-100 dark:focus:bg-red-900/30' : 'text-gray-700 dark:text-gray-200 focus:bg-blue-200 dark:focus:bg-blue-900/50'}`}
+                    className={`bg-transparent outline-none font-medium text-center w-10 rounded transition-colors p-0 placeholder-gray-400 ${hasError ? 'text-red-700 focus:bg-red-100' : 'text-gray-700 focus:bg-blue-200'}`}
                 />
-                <span className={`font-medium select-none ${hasError ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'}`}>:</span>
+                <span className={`font-medium select-none ${hasError ? 'text-red-400' : 'text-gray-400'}`}>:</span>
                 <input 
                     ref={minuteRef}
                     type="text"
@@ -262,7 +262,7 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
                     onBlur={handleMinuteBlur}
                     onFocus={handleFocus}
                     placeholder="MM"
-                    className={`bg-transparent outline-none font-medium text-center w-10 rounded transition-colors p-0 placeholder-gray-400 dark:placeholder-gray-500 ${hasError ? 'text-red-700 dark:text-red-400 focus:bg-red-100 dark:focus:bg-red-900/30' : 'text-gray-700 dark:text-gray-200 focus:bg-blue-200 dark:focus:bg-blue-900/50'}`}
+                    className={`bg-transparent outline-none font-medium text-center w-10 rounded transition-colors p-0 placeholder-gray-400 ${hasError ? 'text-red-700 focus:bg-red-100' : 'text-gray-700 focus:bg-blue-200'}`}
                 />
             </div>
         </div>
