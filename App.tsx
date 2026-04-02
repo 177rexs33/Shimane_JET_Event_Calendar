@@ -211,9 +211,10 @@ export const App: React.FC = () => {
                         <ChevronLeft size={20} />
                     </button>
                     <div className="relative" ref={monthPickerRef}>
-                        <button onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)} className="px-2 sm:px-3 py-1 hover:bg-white rounded-xl text-gray-800 transition-all shadow-sm hover:shadow-md border border-transparent hover:border-gray-200 min-w-[120px] sm:min-w-[140px]">
-                            <span className="text-base sm:text-lg font-semibold select-none block text-center">
-                                {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
+                        <button onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)} className="px-2 sm:px-3 py-1 hover:bg-white rounded-xl text-gray-800 transition-all shadow-sm hover:shadow-md border border-transparent hover:border-gray-200 w-[120px] sm:w-[180px] min-h-[48px] flex items-center justify-center">
+                            <span className="text-base sm:text-lg font-semibold select-none text-center leading-tight flex flex-wrap justify-center items-center gap-x-1">
+                                <span>{MONTH_NAMES[currentDate.getMonth()]}</span>
+                                <span>{currentDate.getFullYear()}</span>
                             </span>
                         </button>
                         {isMonthPickerOpen && (

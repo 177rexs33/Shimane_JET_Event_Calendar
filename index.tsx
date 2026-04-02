@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -17,6 +18,7 @@ root.render(
     <ErrorBoundary>
       <App />
       <Analytics />
+      <SpeedInsights />
     </ErrorBoundary>
   </React.StrictMode>
 );
