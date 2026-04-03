@@ -40,14 +40,4 @@ input[type="datetime-local"]::-webkit-clear-button {
   display: none;
 }
 
-.japanese-holiday {
-  color: #e53935 !important;
-}
 
-.japanese-holiday .holiday-name {
-  color: #e53935;
-  font-weight: 600;
-  font-size: 0.7rem;
-  margin-top: 2px;
-  line-height: 1.1;
-}
