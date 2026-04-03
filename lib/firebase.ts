@@ -25,6 +25,7 @@ import {
   increment
 } from "firebase/firestore";
 import { CalendarEvent } from "../types";
+import { restoreAnonymousUser } from "./authBackup";
 
 enum OperationType {
   CREATE = 'create',
@@ -126,6 +127,14 @@ onAuthStateChanged(auth, async (user) => {
     if (isAuthenticating) return;
     isAuthenticating = true;
     try {
+      const restored = await restoreAnonymousUser();
+      if (restored && !sessionStorage.getItem('auth_restored')) {
+        sessionStorage.setItem('auth_restored', 'true');
+        // If restored, we need to reload the page so Firebase Auth picks it up
+        window.location.reload();
+        return;
+      }
+      sessionStorage.removeItem('auth_restored');
       await signInAnonymously(auth);
     } catch (err) {
       console.error("Error signing in anonymously:", err);

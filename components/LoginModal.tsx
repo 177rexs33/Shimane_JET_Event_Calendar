@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Modal } from './Modal';
 import { auth, signInWithEmailAndPassword } from '../lib/firebase';
 import { Lock, User, Key, AlertCircle, Loader2 } from 'lucide-react';
+import { backupAnonymousUser } from '../lib/authBackup';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -16,10 +17,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (auth.currentUser?.isAnonymous) {
+      await backupAnonymousUser();
+    }
 
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
