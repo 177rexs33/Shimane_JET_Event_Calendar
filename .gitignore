@@ -22,7 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Logo files - do not upload to GitHub
-public/dark_logo.png
-public/light_logo.png
