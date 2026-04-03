@@ -186,13 +186,13 @@ export const App: React.FC = () => {
                 href="https://shimaneparesources.wordpress.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="block hover:opacity-80 transition-opacity cursor-pointer overflow-hidden rounded-xl shadow-md bg-white border border-gray-100"
+                className="block hover:opacity-80 transition-opacity cursor-pointer flex items-center"
                 title="Visit Shimane PA Resources"
             >
                 <img 
-                    src="https://shimaneparesources.wordpress.com/wp-content/uploads/2019/04/shimanekko-posing.jpg" 
-                    alt="Shimanekko" 
-                    className="w-10 h-10 object-cover"
+                    src="/light_logo.png" 
+                    alt="Shimane PA Logo" 
+                    className="h-10 w-auto object-contain"
                     referrerPolicy="no-referrer"
                 />
             </a>

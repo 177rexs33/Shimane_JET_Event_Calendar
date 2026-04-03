@@ -22,3 +22,5 @@ export enum Region {
   OKI = 'Oki'
 }
 
+export type HolidayData = Record<string, string>;
+
