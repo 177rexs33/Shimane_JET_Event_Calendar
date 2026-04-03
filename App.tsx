@@ -190,7 +190,7 @@ export const App: React.FC = () => {
                 title="Visit Shimane PA Resources"
             >
                 <img 
-                    src="/light_logo.png" 
+                    src="https://github.com/user-attachments/assets/c39f0492-fddb-4772-9774-2ca0ae1d1f39" 
                     alt="Shimane PA Logo" 
                     className="h-10 w-auto object-contain"
                     referrerPolicy="no-referrer"
