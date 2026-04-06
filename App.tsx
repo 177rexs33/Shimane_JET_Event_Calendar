@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, ChevronDown, LogOut, Clock, Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, ChevronDown, LogOut, Clock, Menu, ShieldAlert, HelpCircle } from 'lucide-react';
 import { CalendarEvent, Region } from './types';
 import { 
     generateCalendarGrid, 
@@ -16,6 +16,8 @@ import { MonthYearSelector } from './components/MonthYearSelector';
 import { AdminDashboard } from './components/AdminDashboard';
 import { LoginModal } from './components/LoginModal';
 import { PendingRequestsModal } from './components/PendingRequestsModal';
+import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
+import { ContactModal } from './components/ContactModal';
 import { getEvents, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
 
 export const App: React.FC = () => {
@@ -29,6 +31,8 @@ export const App: React.FC = () => {
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isPendingRequestsModalOpen, setIsPendingRequestsModalOpen] = useState(false);
+  const [isPrivacyPolicyModalOpen, setIsPrivacyPolicyModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const [view, setView] = useState<'calendar' | 'admin'>('calendar');
@@ -296,6 +300,22 @@ export const App: React.FC = () => {
                                         <ShieldCheck size={16} />
                                         Admin Login
                                     </button>
+                                    <button 
+                                        onClick={() => { setIsPrivacyPolicyModalOpen(true); setIsMenuOpen(false); }} 
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <ShieldAlert size={16} />
+                                        Privacy Policy
+                                    </button>
+                                    <button 
+                                        onClick={() => { setIsContactModalOpen(true); setIsMenuOpen(false); }} 
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                                    >
+                                        <HelpCircle size={16} className="shrink-0" />
+                                        <span>
+                                            Request Feature/<br />Broken Site?
+                                        </span>
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -434,6 +454,16 @@ export const App: React.FC = () => {
       <PendingRequestsModal
         isOpen={isPendingRequestsModalOpen}
         onClose={() => setIsPendingRequestsModalOpen(false)}
+      />
+
+      <PrivacyPolicyModal
+        isOpen={isPrivacyPolicyModalOpen}
+        onClose={() => setIsPrivacyPolicyModalOpen(false)}
+      />
+
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
       />
     </div>
   );
