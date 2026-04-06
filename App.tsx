@@ -26,6 +26,7 @@ export const App: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<Region | 'All'>('All');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<'JET' | 'AJET' | 'Other' | 'All'>('All');
   
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -34,6 +35,7 @@ export const App: React.FC = () => {
   const [isPrivacyPolicyModalOpen, setIsPrivacyPolicyModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   
   const [view, setView] = useState<'calendar' | 'admin'>('calendar');
   const [isAdminSession, setIsAdminSession] = useState(false);
@@ -41,6 +43,7 @@ export const App: React.FC = () => {
   
   const monthPickerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -76,10 +79,13 @@ export const App: React.FC = () => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
+      if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
+        setIsFilterMenuOpen(false);
+      }
     };
-    if (isMonthPickerOpen || isMenuOpen) document.addEventListener('mousedown', handleClickOutside);
+    if (isMonthPickerOpen || isMenuOpen || isFilterMenuOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMonthPickerOpen, isMenuOpen]);
+  }, [isMonthPickerOpen, isMenuOpen, isFilterMenuOpen]);
 
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -178,7 +184,8 @@ export const App: React.FC = () => {
   const approvedEvents = events.filter(e => {
       const isApproved = e.status === 'approved';
       const matchesRegion = selectedRegionFilter === 'All' || e.region === selectedRegionFilter;
-      return isApproved && matchesRegion;
+      const matchesType = selectedTypeFilter === 'All' || e.type === selectedTypeFilter;
+      return isApproved && matchesRegion && matchesType;
   });
 
   return (
@@ -242,24 +249,71 @@ export const App: React.FC = () => {
         <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
             {view === 'calendar' ? (
                 <>
-                    {/* Region Filter */}
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
-                            <Filter size={14} />
-                        </div>
-                        <select
-                            value={selectedRegionFilter}
-                            onChange={(e) => setSelectedRegionFilter(e.target.value as Region | 'All')}
-                            className="pl-8 pr-8 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer shadow-sm transition-all h-[38px] min-w-[150px]"
+                    {/* Filter Menu */}
+                    <div className="relative" ref={filterMenuRef}>
+                        <button 
+                            onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+                            className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-white border rounded-lg transition-all shadow-sm hover:shadow-md h-[38px] w-[64px] sm:w-[120px] ${
+                                selectedRegionFilter !== 'All' || selectedTypeFilter !== 'All' 
+                                    ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100' 
+                                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                            }`}
+                            title="Filter Events"
                         >
-                            <option value="All">All Regions</option>
-                            {Object.values(Region).map((r) => (
-                                <option key={r} value={r}>{r}</option>
-                            ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-gray-400">
-                            <ChevronDown size={14} />
-                        </div>
+                            <Filter size={16} className="shrink-0" />
+                            <span className="hidden sm:inline">Filters</span>
+                            {(selectedRegionFilter !== 'All' || selectedTypeFilter !== 'All') && (
+                                <span className="flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full shrink-0">
+                                    {(selectedRegionFilter !== 'All' ? 1 : 0) + (selectedTypeFilter !== 'All' ? 1 : 0)}
+                                </span>
+                            )}
+                        </button>
+
+                        {isFilterMenuOpen && (
+                            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 p-4 z-50 animate-in fade-in slide-in-from-top-2">
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Region</label>
+                                        <select
+                                            value={selectedRegionFilter}
+                                            onChange={(e) => setSelectedRegionFilter(e.target.value as Region | 'All')}
+                                            className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+                                        >
+                                            <option value="All">All Regions</option>
+                                            {Object.values(Region).map((r) => (
+                                                <option key={r} value={r}>{r}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Event Type</label>
+                                        <select
+                                            value={selectedTypeFilter}
+                                            onChange={(e) => setSelectedTypeFilter(e.target.value as 'JET' | 'AJET' | 'Other' | 'All')}
+                                            className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+                                        >
+                                            <option value="All">All Types</option>
+                                            <option value="JET">JET</option>
+                                            <option value="AJET">AJET</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    {(selectedRegionFilter !== 'All' || selectedTypeFilter !== 'All') && (
+                                        <div className="pt-2 border-t border-gray-100">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedRegionFilter('All');
+                                                    setSelectedTypeFilter('All');
+                                                }}
+                                                className="w-full py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            >
+                                                Clear Filters
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <button onClick={() => { setSelectedDate(null); setSelectedEvent(null); setIsEventModalOpen(true); }} className="flex items-center justify-center p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-100 hover:shadow-lg">
