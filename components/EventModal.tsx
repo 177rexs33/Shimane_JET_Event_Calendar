@@ -296,11 +296,12 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [region, setRegion] = useState<Region>(Region.IWAMI);
+  const [type, setType] = useState<'JET' | 'AJET' | 'Other' | ''>('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
   
   const [timeError, setTimeError] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<{title?: boolean, location?: boolean, startDate?: boolean, endDate?: boolean}>({});
+  const [formErrors, setFormErrors] = useState<{title?: boolean, location?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean}>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isSuggestingEdit, setIsSuggestingEdit] = useState(false);
 
@@ -344,6 +345,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         setDescription(existingEvent.description || '');
         setLocation(existingEvent.location || '');
         setRegion(existingEvent.region || Region.IWAMI);
+        setType(existingEvent.type || '');
         setIsAllDay(existingEvent.isAllDay);
         setRecurrence(existingEvent.recurrence || 'none');
       } else {
@@ -366,6 +368,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         setDescription('');
         setLocation('');
         setRegion(Region.IWAMI);
+        setType('');
         setIsAllDay(false);
         setRecurrence('none');
       }
@@ -448,11 +451,12 @@ export const EventModal: React.FC<EventModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const errors: {title?: boolean, location?: boolean, startDate?: boolean, endDate?: boolean} = {};
+    const errors: {title?: boolean, location?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean} = {};
     if (!title.trim()) errors.title = true;
     if (!location.trim()) errors.location = true;
     if (!startDate) errors.startDate = true;
     if (!endDate) errors.endDate = true;
+    if (!type) errors.type = true;
 
     if (Object.keys(errors).length > 0) {
         setFormErrors(errors);
@@ -487,6 +491,7 @@ export const EventModal: React.FC<EventModalProps> = ({
       start: startIso,
       end: endIso,
       description,
+      type: type as 'JET' | 'AJET' | 'Other',
       location,
       region,
       isAllDay,
@@ -549,9 +554,14 @@ export const EventModal: React.FC<EventModalProps> = ({
             <div>
               <div className="flex justify-between items-start gap-4">
                 <h4 className="text-2xl font-bold text-gray-900 break-words min-w-0 flex-1">{title}</h4>
-                <div className="flex items-center gap-1.5 text-gray-700 shrink-0 mt-1">
-                  <Globe size={16} className="text-gray-400" />
-                  <span className="text-sm font-medium px-2.5 py-1 bg-gray-100 rounded-md">{region}</span>
+                <div className="flex items-center gap-1.5 text-gray-700 shrink-0 mt-1 flex-wrap justify-end">
+                  {existingEvent?.type && (
+                    <span className="text-sm font-medium px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md">{existingEvent.type}</span>
+                  )}
+                  <span className="text-sm font-medium px-2.5 py-1 bg-gray-100 rounded-md flex items-center gap-1.5">
+                    <Globe size={14} className="text-gray-500" />
+                    {region}
+                  </span>
                 </div>
               </div>
 
@@ -828,6 +838,35 @@ export const EventModal: React.FC<EventModalProps> = ({
                     {Object.values(Region).map((r) => (
                         <option key={r} value={r}>{r}</option>
                     ))}
+                </select>
+                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                    <ChevronDown size={16} />
+                 </div>
+            </div>
+        </div>
+
+        <div className="space-y-1">
+            <label className={`text-xs font-semibold uppercase tracking-wider ${formErrors.type ? 'text-red-500' : 'text-gray-500'}`}>Type *</label>
+            <div className="relative">
+                <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${formErrors.type ? 'text-red-400' : 'text-gray-400'}`}>
+                    <Type size={16} />
+                </div>
+                <select
+                    value={type}
+                    onChange={(e) => {
+                        setType(e.target.value as 'JET' | 'AJET' | 'Other');
+                        if (formErrors.type) setFormErrors(prev => ({ ...prev, type: false }));
+                    }}
+                    className={`w-full pl-10 pr-8 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:ring-2 focus:outline-none appearance-none transition-all cursor-pointer ${
+                        formErrors.type 
+                            ? 'border-red-300 focus:ring-red-500 bg-red-50' 
+                            : 'border-gray-200 focus:ring-blue-500 focus:border-transparent'
+                    }`}
+                >
+                    <option value="" disabled hidden>Select one</option>
+                    <option value="JET">JET</option>
+                    <option value="AJET">AJET</option>
+                    <option value="Other">Other</option>
                 </select>
                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                     <ChevronDown size={16} />

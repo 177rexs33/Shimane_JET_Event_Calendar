@@ -51,9 +51,16 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
     <div key={event.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-2 gap-4">
         <h4 className="font-semibold text-gray-800 truncate max-w-full min-w-0">{event.title}</h4>
-        <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${getRegionClasses(event.region)}`}>
-          {event.region}
-        </span>
+        <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
+          {event.type && (
+            <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
+              {event.type}
+            </span>
+          )}
+          <span className={`text-xs px-2 py-1 rounded-full font-medium ${getRegionClasses(event.region)}`}>
+            {event.region}
+          </span>
+        </div>
       </div>
       
       <div className="space-y-2 text-sm text-gray-600">

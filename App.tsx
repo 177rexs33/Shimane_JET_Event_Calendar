@@ -409,7 +409,7 @@ export const App: React.FC = () => {
                                                         text-xs px-2 py-1 rounded-md font-medium border-l-2 hover:opacity-90 cursor-pointer flex items-center gap-1 overflow-hidden
                                                         ${getRegionClasses(event.region)}
                                                     `}
-                                                    title={`${event.title} (${event.isAllDay ? 'All Day' : formatTime(event.start)})${event.recurrence !== 'none' ? ' - Repeats ' + event.recurrence : ''}`}
+                                                    title={`${event.type ? `[${event.type}] ` : ''}${event.title} (${event.isAllDay ? 'All Day' : formatTime(event.start)})${event.recurrence !== 'none' ? ' - Repeats ' + event.recurrence : ''}`}
                                                 >
                                                     {event.isAllDay ? <span className="opacity-75 text-[10px] shrink-0 whitespace-nowrap font-semibold">All day</span> : <span className="opacity-75 text-[10px] shrink-0 whitespace-nowrap">{formatTime(event.start)}</span>}
                                                     <span className="truncate flex-1">{event.title}</span>
