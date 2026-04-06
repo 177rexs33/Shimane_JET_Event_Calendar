@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, ChevronDown, LogOut, Clock, Menu, ShieldAlert, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle } from 'lucide-react';
 import { CalendarEvent, Region } from './types';
 import { 
     generateCalendarGrid, 
@@ -232,7 +232,6 @@ export const App: React.FC = () => {
                             <MonthYearSelector 
                                 currentDate={currentDate} 
                                 onChange={(date) => { setCurrentDate(date); setIsMonthPickerOpen(false); }}
-                                onClose={() => setIsMonthPickerOpen(false)}
                             />
                         )}
                     </div>

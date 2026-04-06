@@ -241,7 +241,7 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
         if (onBlur) onBlur(newVal);
     };
 
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    const handleFocus = () => {
         isFocused.current = true;
     };
 
@@ -670,7 +670,6 @@ export const EventModal: React.FC<EventModalProps> = ({
                                         handleDateSelect('start', d);
                                         if (formErrors.startDate) setFormErrors(prev => ({ ...prev, startDate: false }));
                                     }} 
-                                    onClose={() => setActiveDateField(null)} 
                                 />
                             </div>
                         )}
@@ -719,7 +718,6 @@ export const EventModal: React.FC<EventModalProps> = ({
                                         handleDateSelect('end', d);
                                         if (formErrors.endDate) setFormErrors(prev => ({ ...prev, endDate: false }));
                                     }} 
-                                    onClose={() => setActiveDateField(null)} 
                                 />
                             </div>
                         )}

@@ -5,10 +5,9 @@ import { MONTH_NAMES } from '../utils/dateUtils';
 interface MonthYearSelectorProps {
   currentDate: Date;
   onChange: (date: Date) => void;
-  onClose: () => void;
 }
 
-export const MonthYearSelector: React.FC<MonthYearSelectorProps> = ({ currentDate, onChange, onClose }) => {
+export const MonthYearSelector: React.FC<MonthYearSelectorProps> = ({ currentDate, onChange }) => {
   const [viewYear, setViewYear] = useState(currentDate.getFullYear());
 
   const handleMonthSelect = (monthIndex: number) => {

@@ -5,10 +5,9 @@ import { generateCalendarGrid, MONTH_NAMES, WEEK_DAYS, isSameDay } from '../util
 interface MiniCalendarProps {
   initialDate: Date;
   onSelectDate: (date: Date) => void;
-  onClose: () => void;
 }
 
-export const MiniCalendar: React.FC<MiniCalendarProps> = ({ initialDate, onSelectDate, onClose }) => {
+export const MiniCalendar: React.FC<MiniCalendarProps> = ({ initialDate, onSelectDate }) => {
   // If initialDate is invalid (empty input), default view to today
   const safeInitialDate = isNaN(initialDate.getTime()) ? new Date() : initialDate;
   const [viewDate, setViewDate] = useState(new Date(safeInitialDate));

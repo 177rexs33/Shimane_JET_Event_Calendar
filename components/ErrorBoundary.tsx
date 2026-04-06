@@ -26,12 +26,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       let errorMessage = this.state.error?.message || 'An unexpected error occurred.';
-      let isFirestoreError = false;
       
       try {
         const parsedError = JSON.parse(errorMessage);
         if (parsedError && parsedError.operationType) {
-          isFirestoreError = true;
           if (parsedError.error.includes('Missing or insufficient permissions')) {
             errorMessage = "You do not have permission to perform this action. If you recently set up Firebase, please ensure you have configured your Firestore Security Rules in the Firebase Console.";
           } else {
