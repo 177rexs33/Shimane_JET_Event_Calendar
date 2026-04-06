@@ -20,9 +20,15 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm custom-scrollbar">
+    <div 
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm custom-scrollbar"
+      onClick={onClose}
+    >
       <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col animate-in fade-in zoom-in-95 duration-200 my-8">
+        <div 
+          className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col animate-in fade-in zoom-in-95 duration-200 my-8"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex justify-between items-center p-4 border-b border-gray-100 shrink-0">
             <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
             <button 
