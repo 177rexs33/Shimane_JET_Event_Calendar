@@ -43,10 +43,35 @@ export const App: React.FC = () => {
   const [isAdminSession, setIsAdminSession] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [holidays, setHolidays] = useState<Record<string, string>>({});
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
   
   const monthPickerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateScrollbarWidth = () => {
+      if (scrollContainerRef.current) {
+        const width = scrollContainerRef.current.offsetWidth - scrollContainerRef.current.clientWidth;
+        setScrollbarWidth(width);
+      }
+    };
+
+    updateScrollbarWidth();
+    window.addEventListener('resize', updateScrollbarWidth);
+    
+    let observer: ResizeObserver | null = null;
+    if (scrollContainerRef.current) {
+      observer = new ResizeObserver(updateScrollbarWidth);
+      observer.observe(scrollContainerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateScrollbarWidth);
+      if (observer) observer.disconnect();
+    };
+  }, [view, currentDate]);
 
   useEffect(() => {
     fetch('https://holidays-jp.github.io/api/v1/date.json')
@@ -201,13 +226,16 @@ export const App: React.FC = () => {
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 text-gray-900 font-sans">
       <div className="flex-none z-30 flex flex-col shadow-sm">
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-2 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <header 
+            className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-2 flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center gap-3"
+            style={{ paddingRight: `calc(1.5rem + ${scrollbarWidth}px)` }}
+        >
+          <div className="flex items-center gap-3 justify-self-start min-w-0 w-full">
             <a 
                 href="https://shimaneparesources.wordpress.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="block hover:opacity-80 transition-opacity cursor-pointer flex items-center"
+                className="block hover:opacity-80 transition-opacity cursor-pointer flex items-center shrink-0"
                 title="Visit Shimane PA Resources"
             >
                 <img 
@@ -218,15 +246,15 @@ export const App: React.FC = () => {
                 />
             </a>
             <h1 
-                className="text-lg font-bold tracking-tight text-gray-800 cursor-pointer"
+                className="text-lg font-bold tracking-tight text-gray-800 cursor-pointer truncate"
                 onClick={() => setView('calendar')}
             >
                 Shimane JET Event Calendar
             </h1>
         </div>
 
-        {view === 'calendar' && (
-            <div className="flex flex-col items-center gap-1">
+        {view === 'calendar' ? (
+            <div className="flex flex-col items-center gap-1 justify-self-center">
                 <div className="flex items-center gap-2 sm:gap-4 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-200/50 w-full sm:w-auto justify-center">
                     <button onClick={handlePrevMonth} className="p-2 hover:bg-white rounded-xl text-gray-600 transition-all shadow-sm hover:shadow-md">
                         <ChevronLeft size={20} />
@@ -253,9 +281,11 @@ export const App: React.FC = () => {
                     Today
                 </button>
             </div>
+        ) : (
+            <div />
         )}
 
-        <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto justify-self-end min-w-0">
             {view === 'calendar' ? (
                 <>
                     {/* Filter Menu */}
@@ -421,7 +451,10 @@ export const App: React.FC = () => {
           </div>
         </header>
         {isAdminSession && view === 'calendar' && (
-            <div className="bg-gray-900 text-white px-6 py-2 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-in fade-in slide-in-from-top-2">
+            <div 
+                className="bg-gray-900 text-white px-6 py-2 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-in fade-in slide-in-from-top-2"
+                style={{ paddingRight: `calc(1.5rem + ${scrollbarWidth}px)` }}
+            >
                 <div className="flex items-center gap-2">
                     <div className="p-1 bg-gray-800 rounded-md border border-gray-700">
                         <ShieldCheck size={16} className="text-emerald-400" />
@@ -448,7 +481,7 @@ export const App: React.FC = () => {
              </div>
         ) : (
             <>
-                <div className="w-full flex-1 flex flex-col overflow-auto">
+                <div className="w-full flex-1 flex flex-col overflow-auto" ref={scrollContainerRef}>
                     <div className="min-w-[700px] flex flex-col h-full px-4 md:px-6 pb-8">
                         <div className="grid grid-cols-7 mb-4 sticky top-0 z-20 bg-gray-50 py-3 -mx-4 px-4 md:-mx-6 md:px-6 shadow-sm border-b border-gray-200/50 backdrop-blur-sm bg-gray-50/90">
                             {WEEK_DAYS.map(day => (
