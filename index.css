@@ -40,4 +40,14 @@ input[type="datetime-local"]::-webkit-clear-button {
   display: none;
 }
 
+.holiday {
+  color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+}
+
+.holiday .holiday-text {
+  color: #dc2626;
+}
+
 

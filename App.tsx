@@ -9,7 +9,8 @@ import {
     isSameDay, 
     isEventActiveOnDate,
     formatTime,
-    getRegionClasses 
+    getRegionClasses,
+    getEnglishHolidayName
 } from './utils/dateUtils';
 import { EventModal } from './components/EventModal';
 import { MonthYearSelector } from './components/MonthYearSelector';
@@ -27,6 +28,7 @@ export const App: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<Region | 'All'>('All');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<'JET' | 'AJET' | 'Other' | 'All'>('All');
+  const [showNationalHolidays, setShowNationalHolidays] = useState(true);
   
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -40,10 +42,18 @@ export const App: React.FC = () => {
   const [view, setView] = useState<'calendar' | 'admin'>('calendar');
   const [isAdminSession, setIsAdminSession] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [holidays, setHolidays] = useState<Record<string, string>>({});
   
   const monthPickerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('https://holidays-jp.github.io/api/v1/date.json')
+      .then(res => res.json())
+      .then(data => setHolidays(data))
+      .catch(err => console.error('Failed to fetch holidays:', err));
+  }, []);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -297,12 +307,28 @@ export const App: React.FC = () => {
                                             <option value="Other">Other</option>
                                         </select>
                                     </div>
-                                    {(selectedRegionFilter !== 'All' || selectedTypeFilter !== 'All') && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">National Holidays</label>
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                id="showNationalHolidays"
+                                                checked={showNationalHolidays}
+                                                onChange={(e) => setShowNationalHolidays(e.target.checked)}
+                                                className="w-4 h-4 text-blue-600 bg-gray-50 border-gray-300 rounded focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="showNationalHolidays" className="text-sm text-gray-700 cursor-pointer">
+                                                Show National Holidays
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {(selectedRegionFilter !== 'All' || selectedTypeFilter !== 'All' || !showNationalHolidays) && (
                                         <div className="pt-2 border-t border-gray-100">
                                             <button
                                                 onClick={() => {
                                                     setSelectedRegionFilter('All');
                                                     setSelectedTypeFilter('All');
+                                                    setShowNationalHolidays(true);
                                                 }}
                                                 className="w-full py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                             >
@@ -436,6 +462,12 @@ export const App: React.FC = () => {
                                 const dayEvents = approvedEvents.filter(e => isEventActiveOnDate(cell.date, e))
                                                         .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
+                                const year = cell.date.getFullYear();
+                                const month = String(cell.date.getMonth() + 1).padStart(2, '0');
+                                const day = String(cell.date.getDate()).padStart(2, '0');
+                                const dateString = `${year}-${month}-${day}`;
+                                const holidayName = showNationalHolidays ? holidays[dateString] : undefined;
+
                                 return (
                                     <div 
                                         key={index} 
@@ -444,12 +476,23 @@ export const App: React.FC = () => {
                                             transition-all hover:shadow-md flex flex-col gap-1 overflow-hidden group
                                             ${!cell.isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : 'text-gray-700'}
                                             ${isToday ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
+                                            ${holidayName ? 'holiday' : ''}
                                         `}
                                     >
                                         <div className="flex justify-between items-start">
-                                            <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-blue-600 text-white' : ''}`}>
+                                            <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? 'bg-red-600 text-white' : ''}`}>
                                                 {cell.date.getDate()}
                                             </span>
+                                            {holidayName && (
+                                                <div className="flex flex-col items-end ml-1 flex-1 overflow-hidden">
+                                                    <span className="text-[10px] font-semibold truncate w-full text-right leading-tight holiday-text">
+                                                        {holidayName}
+                                                    </span>
+                                                    <span className="text-[9px] opacity-75 truncate w-full text-right leading-tight holiday-text">
+                                                        {getEnglishHolidayName(holidayName)}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="flex-1 flex flex-col gap-1 overflow-y-auto overflow-x-hidden custom-scrollbar mt-1">

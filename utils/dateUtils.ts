@@ -152,3 +152,37 @@ export const getRegionClasses = (region: Region) => {
             return 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200';
     }
 };
+
+export const getEnglishHolidayName = (japaneseName: string): string => {
+    const translations: Record<string, string> = {
+        "元日": "New Year's Day",
+        "成人の日": "Coming of Age Day",
+        "建国記念の日": "National Foundation Day",
+        "天皇誕生日": "Emperor's Birthday",
+        "春分の日": "Vernal Equinox Day",
+        "昭和の日": "Showa Day",
+        "憲法記念日": "Constitution Memorial Day",
+        "みどりの日": "Greenery Day",
+        "こどもの日": "Children's Day",
+        "海の日": "Marine Day",
+        "山の日": "Mountain Day",
+        "敬老の日": "Respect for the Aged Day",
+        "秋分の日": "Autumnal Equinox Day",
+        "スポーツの日": "Sports Day",
+        "文化の日": "Culture Day",
+        "勤労感謝の日": "Labor Thanksgiving Day",
+        "国民の休日": "Citizen's Holiday",
+        "即位礼正殿の儀": "Enthronement Ceremony"
+    };
+
+    // Handle observed holidays (振替休日)
+    if (japaneseName.includes("振替休日")) {
+        const baseName = japaneseName.replace(" 振替休日", "").replace("振替休日", "").trim();
+        if (translations[baseName]) {
+            return `${translations[baseName]} (Observed)`;
+        }
+        return "Observed Holiday";
+    }
+
+    return translations[japaneseName] || japaneseName;
+};
