@@ -154,7 +154,7 @@ interface TimeSelectProps {
 
 const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onComplete, onBlur, hasError }) => {
     // Ensure we have defaults, split safely
-    const [h = '0', m = '0'] = (value || '0:0').split(':');
+    const [h = '', m = ''] = value ? value.split(':') : ['', ''];
     const minuteRef = useRef<HTMLInputElement>(null);
     const isFocused = useRef(false);
 
@@ -165,7 +165,7 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
     useEffect(() => {
         // Only update from props if not currently editing (prevents overwriting user input)
         if (isFocused.current) return;
-        const [newH = '0', newM = '0'] = (value || '0:0').split(':');
+        const [newH = '', newM = ''] = value ? value.split(':') : ['', ''];
         
         // Update local state respecting the incoming value without stripping zeros
         // The parent or onBlur logic handles the "09" vs "9" formatting preference
@@ -188,19 +188,25 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
     const handleHourBlur = () => {
         isFocused.current = false;
         
+        if (localH === '') {
+            if (value) {
+                const [h = ''] = value.split(':');
+                setLocalH(h);
+            }
+            return;
+        }
+
         let val = parseInt(localH, 10);
-        if (isNaN(val) || localH === '') {
-            setLocalH('00');
-            const paddedM = localM.padStart(2, '0');
-            const newVal = `00:${paddedM}`;
-            updateTime('00', paddedM);
-            if (onBlur) onBlur(newVal);
+        if (isNaN(val)) {
+            setLocalH('');
+            updateTime('', localM);
+            if (onBlur) onBlur(`:${localM}`);
             return;
         }
         
         const clamped = Math.min(23, Math.max(0, val));
         const formatted = clamped.toString().padStart(2, '0');
-        const paddedM = localM.padStart(2, '0');
+        const paddedM = localM === '' ? '' : localM.padStart(2, '0');
         
         setLocalH(formatted);
         const newVal = `${formatted}:${paddedM}`;
@@ -221,19 +227,25 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
     const handleMinuteBlur = () => {
         isFocused.current = false;
         
+        if (localM === '') {
+            if (value) {
+                const [, m = ''] = value.split(':');
+                setLocalM(m);
+            }
+            return;
+        }
+
         let val = parseInt(localM, 10);
-        if (isNaN(val) || localM === '') {
-            setLocalM('00');
-            const paddedH = localH.padStart(2, '0');
-            const newVal = `${paddedH}:00`;
-            updateTime(paddedH, '00');
-            if (onBlur) onBlur(newVal);
+        if (isNaN(val)) {
+            setLocalM('');
+            updateTime(localH, '');
+            if (onBlur) onBlur(`${localH}:`);
             return;
         }
 
         const clamped = Math.min(59, Math.max(0, val));
         const formatted = clamped.toString().padStart(2, '0');
-        const paddedH = localH.padStart(2, '0');
+        const paddedH = localH === '' ? '' : localH.padStart(2, '0');
         
         setLocalM(formatted);
         const newVal = `${paddedH}:${formatted}`;
@@ -294,14 +306,13 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [endDate, setEndDate] = useState(''); 
   const [endTime, setEndTime] = useState('');
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
   const [region, setRegion] = useState<Region>(Region.IWAMI);
   const [type, setType] = useState<'JET' | 'AJET' | 'Other' | ''>('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
   
   const [timeError, setTimeError] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<{title?: boolean, location?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean}>({});
+  const [formErrors, setFormErrors] = useState<{title?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean, startTime?: boolean, endTime?: boolean}>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isSuggestingEdit, setIsSuggestingEdit] = useState(false);
 
@@ -314,7 +325,6 @@ export const EventModal: React.FC<EventModalProps> = ({
   const endDayInputRef = useRef<HTMLInputElement>(null);
   const endHourRef = useRef<HTMLInputElement>(null);
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const locationTextareaRef = useRef<HTMLTextAreaElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -326,9 +336,8 @@ export const EventModal: React.FC<EventModalProps> = ({
     };
 
     resizeTextarea(titleTextareaRef);
-    resizeTextarea(locationTextareaRef);
     resizeTextarea(descriptionTextareaRef);
-  }, [title, location, description, isOpen, isSuggestingEdit]);
+  }, [title, description, isOpen, isSuggestingEdit]);
 
   useEffect(() => {
     if (isOpen) {
@@ -343,7 +352,6 @@ export const EventModal: React.FC<EventModalProps> = ({
         setEndDate(toDateString(e));
         setEndTime(toTimeString(e));
         setDescription(existingEvent.description || '');
-        setLocation(existingEvent.location || '');
         setRegion(existingEvent.region || Region.IWAMI);
         setType(existingEvent.type || '');
         setIsAllDay(existingEvent.isAllDay);
@@ -366,7 +374,6 @@ export const EventModal: React.FC<EventModalProps> = ({
         }
         setTitle('');
         setDescription('');
-        setLocation('');
         setRegion(Region.IWAMI);
         setType('');
         setIsAllDay(false);
@@ -451,12 +458,16 @@ export const EventModal: React.FC<EventModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const errors: {title?: boolean, location?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean} = {};
+    const errors: {title?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean, startTime?: boolean, endTime?: boolean} = {};
     if (!title.trim()) errors.title = true;
-    if (!location.trim()) errors.location = true;
     if (!startDate) errors.startDate = true;
     if (!endDate) errors.endDate = true;
     if (!type) errors.type = true;
+    
+    if (!isAllDay) {
+        if (!startTime || startTime === ':') errors.startTime = true;
+        if (!endTime || endTime === ':') errors.endTime = true;
+    }
 
     if (Object.keys(errors).length > 0) {
         setFormErrors(errors);
@@ -471,8 +482,8 @@ export const EventModal: React.FC<EventModalProps> = ({
         return;
     }
 
-    const sTime = isAllDay ? '00:00' : padTime(startTime || '00:00');
-    const eTime = isAllDay ? '00:00' : padTime(endTime || '00:00');
+    const sTime = isAllDay ? '00:00' : padTime(startTime);
+    const eTime = isAllDay ? '00:00' : padTime(endTime);
     
     const startIso = `${startDate}T${sTime}:00`;
     const endIso = `${endDate}T${eTime}:00`;
@@ -492,7 +503,6 @@ export const EventModal: React.FC<EventModalProps> = ({
       end: endIso,
       description,
       type: type as 'JET' | 'AJET' | 'Other',
-      location,
       region,
       isAllDay,
       recurrence,
@@ -538,7 +548,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     setActiveDateField(field);
   };
 
-  const isFormValid = title.trim().length > 0 && location.trim().length > 0 && startDate.length > 0 && endDate.length > 0 && !timeError;
+  const isFormValid = title.trim().length > 0 && startDate.length > 0 && endDate.length > 0 && !timeError;
 
   const isReadOnly = !isAdmin && existingEvent && !isSuggestingEdit;
 
@@ -590,11 +600,6 @@ export const EventModal: React.FC<EventModalProps> = ({
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{description}</p>
               </div>
             )}
-
-            <div className="flex items-center gap-2 text-gray-700">
-              <MapPin size={18} className="text-gray-400" />
-              <span className="font-medium">{location}</span>
-            </div>
           </div>
           
           <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-6">
@@ -677,9 +682,13 @@ export const EventModal: React.FC<EventModalProps> = ({
                      {!isAllDay && (
                         <TimeSelect 
                             value={startTime} 
-                            onChange={setStartTime} 
+                            onChange={(val) => {
+                                setStartTime(val);
+                                if (formErrors.startTime) setFormErrors(prev => ({ ...prev, startTime: false }));
+                            }} 
                             inputRef={startHourRef}
                             onBlur={handleStartTimeBlur}
+                            hasError={formErrors.startTime}
                         />
                      )}
                 </div>
@@ -726,9 +735,12 @@ export const EventModal: React.FC<EventModalProps> = ({
                          <div className="relative w-full sm:w-auto">
                             <TimeSelect 
                                 value={endTime} 
-                                onChange={setEndTime}
+                                onChange={(val) => {
+                                    setEndTime(val);
+                                    if (formErrors.endTime) setFormErrors(prev => ({ ...prev, endTime: false }));
+                                }}
                                 inputRef={endHourRef}
-                                hasError={!!timeError}
+                                hasError={!!timeError || formErrors.endTime}
                             />
                             {timeError && (
                                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 w-max max-w-[200px]">
@@ -777,31 +789,6 @@ export const EventModal: React.FC<EventModalProps> = ({
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
                 </select>
-            </div>
-        </div>
-
-        <div className="space-y-1">
-            <label className={`text-xs font-semibold uppercase tracking-wider ${formErrors.location ? 'text-red-500' : 'text-gray-500'}`}>Location *</label>
-            <div className="relative">
-                <div className={`absolute top-2.5 left-3 pointer-events-none ${formErrors.location ? 'text-red-400' : 'text-gray-400'}`}>
-                    <MapPin size={16} />
-                </div>
-                <textarea
-                    ref={locationTextareaRef}
-                    required
-                    value={location}
-                    onChange={(e) => {
-                        setLocation(e.target.value);
-                        if (formErrors.location) setFormErrors(prev => ({ ...prev, location: false }));
-                    }}
-                    placeholder="Add location"
-                    rows={1}
-                    className={`w-full pl-10 pr-3 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:ring-2 focus:outline-none transition-all resize-none overflow-hidden ${
-                        formErrors.location 
-                            ? 'border-red-300 focus:ring-red-500 bg-red-50' 
-                            : 'border-gray-200 focus:ring-blue-500 focus:border-transparent'
-                    }`}
-                />
             </div>
         </div>
 

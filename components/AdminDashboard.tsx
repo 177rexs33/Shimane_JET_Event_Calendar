@@ -130,7 +130,6 @@ export const AdminDashboard: React.FC = () => {
       return {
           title: event.title !== orig.title,
           description: (event.description || '') !== (orig.description || ''),
-          location: (event.location || '') !== (orig.location || ''),
           region: event.region !== orig.region,
           time: event.start !== orig.start || event.end !== orig.end || event.isAllDay !== orig.isAllDay,
           recurrence: (event.recurrence || 'none') !== (orig.recurrence || 'none')
@@ -334,13 +333,6 @@ export const AdminDashboard: React.FC = () => {
                                                     </span>
                                                 </div>
                                             </div>
-
-                                            {event.location && (
-                                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                    <MapPin size={14} className="shrink-0 text-gray-400" />
-                                                    <span className="truncate">{event.location}</span>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
 
@@ -486,25 +478,6 @@ export const AdminDashboard: React.FC = () => {
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {/* Location Diff */}
-                                            <div className={`p-3 rounded-lg ${changes.location ? 'bg-amber-50/50 border border-amber-100' : 'bg-gray-50'}`}>
-                                                <div className="flex items-center gap-2 mb-1.5">
-                                                    <MapPin size={14} className="text-gray-400" />
-                                                    <span className="text-xs font-semibold text-gray-500 uppercase">Location</span>
-                                                    {changes.location && <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 rounded">MODIFIED</span>}
-                                                </div>
-                                                {changes.location ? (
-                                                    <div className="space-y-1 text-sm">
-                                                        <div className="text-gray-900">{event.location || <span className="italic text-gray-400">No location</span>}</div>
-                                                        <div className="text-red-400 text-xs opacity-70">
-                                                            {original?.location || 'No location'}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-sm text-gray-600">{event.location || <span className="italic text-gray-400">No location</span>}</p>
-                                                )}
-                                            </div>
                                         </div>
                                     </div>
 
@@ -568,7 +541,7 @@ export const AdminDashboard: React.FC = () => {
                                         </div>
                                         <h3 className="font-semibold text-gray-700 truncate max-w-full">{event.title}</h3>
                                         <p className="text-xs text-gray-500 truncate">
-                                            {formatFriendlyDate(event.start)} • {event.location || 'No location'}
+                                            {formatFriendlyDate(event.start)} • {event.region}
                                         </p>
                                     </div>
                                     {rejectedEventToDelete === event.id ? (
@@ -674,13 +647,6 @@ export const AdminDashboard: React.FC = () => {
                                                     </span>
                                                 </div>
                                             </div>
-
-                                            {event.location && (
-                                                <div className="flex items-start gap-2 text-sm text-gray-500 min-w-0">
-                                                    <MapPin size={14} className="shrink-0 text-gray-400 mt-0.5" />
-                                                    <span className="break-words whitespace-normal flex-1 min-w-0">{event.location}</span>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
 

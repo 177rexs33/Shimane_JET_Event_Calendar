@@ -10,7 +10,6 @@ export interface CalendarEvent {
   end: string;   // ISO 8601 date string
   region: Region;
   isAllDay: boolean;
-  location?: string;
   recurrence?: RecurrenceType;
   status?: 'pending' | 'approved' | 'rejected' | 'edited' | 'deleted';
   originalData?: CalendarEvent; // Stores the state of the event before editing

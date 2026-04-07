@@ -72,13 +72,6 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
             {event.isAllDay && ' • All Day'}
           </span>
         </div>
-        
-        {event.location && (
-          <div className="flex items-center gap-2">
-            <MapPin size={14} className="text-gray-400" />
-            <span className="truncate">{event.location}</span>
-          </div>
-        )}
       </div>
 
       {event.description && (
