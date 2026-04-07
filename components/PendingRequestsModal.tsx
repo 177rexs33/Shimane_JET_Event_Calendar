@@ -60,6 +60,11 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
           <span className={`text-xs px-2 py-1 rounded-full font-medium ${getRegionClasses(event.region)}`}>
             {event.region}
           </span>
+          {event.city && event.city !== 'Whole Region' && (
+            <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-800">
+              {event.city}
+            </span>
+          )}
         </div>
       </div>
       

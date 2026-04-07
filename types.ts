@@ -9,6 +9,7 @@ export interface CalendarEvent {
   start: string; // ISO 8601 date string
   end: string;   // ISO 8601 date string
   region: Region;
+  city?: string;
   isAllDay: boolean;
   recurrence?: RecurrenceType;
   status?: 'pending' | 'approved' | 'rejected' | 'edited' | 'deleted';
@@ -19,8 +20,16 @@ export interface CalendarEvent {
 export enum Region {
   IWAMI = 'Iwami (West)',
   IZUMO = 'Izumo (East)',
-  OKI = 'Oki'
+  OKI = 'Oki',
+  OUTSIDE_SHIMANE = 'Outside Shimane'
 }
+
+export const REGION_CITIES: Record<Region, string[]> = {
+  [Region.IWAMI]: ['Whole Region', 'Masuda', 'Hamada', 'Gotsu', 'Oda', 'Yoshika', 'Tsuwano', 'Kawamoto', 'Ohnan', 'Misato'],
+  [Region.IZUMO]: ['Whole Region', 'Izumo', 'Matsue', 'Unnan', 'Yasugi', 'Iinan', 'Okuizumo'],
+  [Region.OKI]: ['Whole Region', 'Okinoshima', 'Ama', 'Nishinoshima', 'Chibu'],
+  [Region.OUTSIDE_SHIMANE]: ['N/A']
+};
 
 export type HolidayData = Record<string, string>;
 

@@ -131,6 +131,7 @@ export const AdminDashboard: React.FC = () => {
           title: event.title !== orig.title,
           description: (event.description || '') !== (orig.description || ''),
           region: event.region !== orig.region,
+          city: event.city !== orig.city,
           time: event.start !== orig.start || event.end !== orig.end || event.isAllDay !== orig.isAllDay,
           recurrence: (event.recurrence || 'none') !== (orig.recurrence || 'none')
       };
@@ -309,6 +310,11 @@ export const AdminDashboard: React.FC = () => {
                                             <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold ${getRegionClasses(event.region)}`}>
                                                 {event.region}
                                             </span>
+                                            {event.city && event.city !== 'Whole Region' && (
+                                                <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-800">
+                                                    {event.city}
+                                                </span>
+                                            )}
                                         </div>
                                         
                                         <div>
@@ -410,6 +416,21 @@ export const AdminDashboard: React.FC = () => {
                                                         {event.region}
                                                     </span>
                                                 )}
+                                                {changes.city ? (
+                                                    <div className="flex items-center gap-2 text-xs">
+                                                        <span className="px-2 py-0.5 rounded-md font-semibold opacity-50 bg-gray-100 text-gray-800">
+                                                            {original?.city || 'Whole Region'}
+                                                        </span>
+                                                        <ArrowRight size={12} className="text-gray-400" />
+                                                        <span className="px-2 py-0.5 rounded-md font-semibold ring-2 ring-amber-400 bg-gray-100 text-gray-800">
+                                                            {event.city || 'Whole Region'}
+                                                        </span>
+                                                    </div>
+                                                ) : event.city && event.city !== 'Whole Region' ? (
+                                                    <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-800">
+                                                        {event.city}
+                                                    </span>
+                                                ) : null}
                                             </div>
                                         </div>
 
@@ -623,6 +644,11 @@ export const AdminDashboard: React.FC = () => {
                                             <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold ${getRegionClasses(event.region)}`}>
                                                 {event.region}
                                             </span>
+                                            {event.city && event.city !== 'Whole Region' && (
+                                                <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-800">
+                                                    {event.city}
+                                                </span>
+                                            )}
                                         </div>
                                         
                                         <div className="min-w-0 w-full">

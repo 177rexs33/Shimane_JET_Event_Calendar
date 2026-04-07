@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from './Modal';
-import { CalendarEvent, Region, RecurrenceType } from '../types';
+import { CalendarEvent, Region, RecurrenceType, REGION_CITIES } from '../types';
 import { toDateString, toTimeString } from '../utils/dateUtils';
 import { Clock, MapPin, AlignLeft, Type, Calendar as CalendarIcon, Globe, ChevronDown, Repeat, Check, AlertCircle, Trash2 } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
@@ -306,13 +306,14 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [endDate, setEndDate] = useState(''); 
   const [endTime, setEndTime] = useState('');
   const [description, setDescription] = useState('');
-  const [region, setRegion] = useState<Region>(Region.IWAMI);
+  const [region, setRegion] = useState<Region | ''>('');
+  const [city, setCity] = useState<string>('Whole Region');
   const [type, setType] = useState<'JET' | 'AJET' | 'Other' | ''>('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
   
   const [timeError, setTimeError] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<{title?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean, startTime?: boolean, endTime?: boolean}>({});
+  const [formErrors, setFormErrors] = useState<{title?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean, startTime?: boolean, endTime?: boolean, region?: boolean}>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isSuggestingEdit, setIsSuggestingEdit] = useState(false);
 
@@ -352,7 +353,8 @@ export const EventModal: React.FC<EventModalProps> = ({
         setEndDate(toDateString(e));
         setEndTime(toTimeString(e));
         setDescription(existingEvent.description || '');
-        setRegion(existingEvent.region || Region.IWAMI);
+        setRegion(existingEvent.region || '');
+        setCity(existingEvent.city || 'Whole Region');
         setType(existingEvent.type || '');
         setIsAllDay(existingEvent.isAllDay);
         setRecurrence(existingEvent.recurrence || 'none');
@@ -374,7 +376,8 @@ export const EventModal: React.FC<EventModalProps> = ({
         }
         setTitle('');
         setDescription('');
-        setRegion(Region.IWAMI);
+        setRegion('');
+        setCity('Whole Region');
         setType('');
         setIsAllDay(false);
         setRecurrence('none');
@@ -458,11 +461,12 @@ export const EventModal: React.FC<EventModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const errors: {title?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean, startTime?: boolean, endTime?: boolean} = {};
+    const errors: {title?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean, startTime?: boolean, endTime?: boolean, region?: boolean} = {};
     if (!title.trim()) errors.title = true;
     if (!startDate) errors.startDate = true;
     if (!endDate) errors.endDate = true;
     if (!type) errors.type = true;
+    if (!region) errors.region = true;
     
     if (!isAllDay) {
         if (!startTime || startTime === ':') errors.startTime = true;
@@ -503,7 +507,8 @@ export const EventModal: React.FC<EventModalProps> = ({
       end: endIso,
       description,
       type: type as 'JET' | 'AJET' | 'Other',
-      region,
+      region: region as Region,
+      city,
       isAllDay,
       recurrence,
     };
@@ -548,7 +553,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     setActiveDateField(field);
   };
 
-  const isFormValid = title.trim().length > 0 && startDate.length > 0 && endDate.length > 0 && !timeError;
+  const isFormValid = title.trim().length > 0 && startDate.length > 0 && endDate.length > 0 && type !== '' && region !== '' && !timeError;
 
   const isReadOnly = !isAdmin && existingEvent && !isSuggestingEdit;
 
@@ -570,8 +575,14 @@ export const EventModal: React.FC<EventModalProps> = ({
                   )}
                   <span className="text-sm font-medium px-2.5 py-1 bg-gray-100 rounded-md flex items-center gap-1.5">
                     <Globe size={14} className="text-gray-500" />
-                    {region}
+                    {existingEvent?.region}
                   </span>
+                  {existingEvent?.city && existingEvent.city !== 'Whole Region' && existingEvent.city !== 'N/A' && (
+                    <span className="text-sm font-medium px-2.5 py-1 bg-gray-100 rounded-md flex items-center gap-1.5">
+                      <MapPin size={14} className="text-gray-500" />
+                      {existingEvent.city}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -810,16 +821,30 @@ export const EventModal: React.FC<EventModalProps> = ({
         </div>
 
         <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Region</label>
+            <label className={`text-xs font-semibold uppercase tracking-wider ${formErrors.region ? 'text-red-500' : 'text-gray-500'}`}>Region *</label>
             <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${formErrors.region ? 'text-red-400' : 'text-gray-400'}`}>
                     <Globe size={16} />
                 </div>
                 <select
                     value={region}
-                    onChange={(e) => setRegion(e.target.value as Region)}
-                    className="w-full pl-10 pr-8 py-2 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none transition-all cursor-pointer"
+                    onChange={(e) => {
+                        const newRegion = e.target.value as Region;
+                        setRegion(newRegion);
+                        if (newRegion === Region.OUTSIDE_SHIMANE) {
+                            setCity('N/A');
+                        } else {
+                            setCity('Whole Region');
+                        }
+                        if (formErrors.region) setFormErrors(prev => ({ ...prev, region: false }));
+                    }}
+                    className={`w-full pl-10 pr-8 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:ring-2 focus:outline-none appearance-none transition-all cursor-pointer ${
+                        formErrors.region 
+                            ? 'border-red-300 focus:ring-red-500 bg-red-50' 
+                            : 'border-gray-200 focus:ring-blue-500 focus:border-transparent'
+                    }`}
                 >
+                    <option value="" disabled hidden>Select one</option>
                     {Object.values(Region).map((r) => (
                         <option key={r} value={r}>{r}</option>
                     ))}
@@ -829,6 +854,31 @@ export const EventModal: React.FC<EventModalProps> = ({
                  </div>
             </div>
         </div>
+
+        {region !== Region.OUTSIDE_SHIMANE && (
+        <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">City</label>
+            <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <MapPin size={16} />
+                </div>
+                <select
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full pl-10 pr-8 py-2 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none transition-all cursor-pointer"
+                >
+                    {region ? REGION_CITIES[region as Region]?.filter(c => c !== 'N/A').map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                    )) : (
+                        <option value="Whole Region">Whole Region</option>
+                    )}
+                </select>
+                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                    <ChevronDown size={16} />
+                </div>
+            </div>
+        </div>
+        )}
 
         <div className="space-y-1">
             <label className={`text-xs font-semibold uppercase tracking-wider ${formErrors.type ? 'text-red-500' : 'text-gray-500'}`}>Type *</label>
