@@ -5,7 +5,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description?: string;
-  type?: 'JET' | 'AJET' | 'Other';
+  type?: 'JET' | 'AJET' | 'Local Event';
   start: string; // ISO 8601 date string
   end: string;   // ISO 8601 date string
   region: Region;

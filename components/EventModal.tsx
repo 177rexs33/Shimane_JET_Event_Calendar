@@ -308,7 +308,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [description, setDescription] = useState('');
   const [region, setRegion] = useState<Region | ''>('');
   const [city, setCity] = useState<string>('Whole Region');
-  const [type, setType] = useState<'JET' | 'AJET' | 'Other' | ''>('');
+  const [type, setType] = useState<'JET' | 'AJET' | 'Local Event' | ''>('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
   
@@ -506,7 +506,7 @@ export const EventModal: React.FC<EventModalProps> = ({
       start: startIso,
       end: endIso,
       description,
-      type: type as 'JET' | 'AJET' | 'Other',
+      type: type as 'JET' | 'AJET' | 'Local Event',
       region: region as Region,
       city,
       isAllDay,
@@ -887,7 +887,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                 <select
                     value={type}
                     onChange={(e) => {
-                        setType(e.target.value as 'JET' | 'AJET' | 'Other');
+                        setType(e.target.value as 'JET' | 'AJET' | 'Local Event');
                         if (formErrors.type) setFormErrors(prev => ({ ...prev, type: false }));
                     }}
                     className={`w-full pl-10 pr-8 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:ring-2 focus:outline-none appearance-none transition-all cursor-pointer ${
@@ -899,7 +899,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                     <option value="" disabled hidden>Select one</option>
                     <option value="JET">JET</option>
                     <option value="AJET">AJET</option>
-                    <option value="Other">Other</option>
+                    <option value="Local Event">Local Event</option>
                 </select>
                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                     <ChevronDown size={16} />

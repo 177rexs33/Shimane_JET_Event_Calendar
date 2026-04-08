@@ -28,7 +28,7 @@ export const App: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<Region | 'All'>('All');
   const [selectedCityFilter, setSelectedCityFilter] = useState<string>('Whole Region');
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState<'JET' | 'AJET' | 'Other' | 'All'>('All');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<'JET' | 'AJET' | 'Local Event' | 'All'>('All');
   const [showNationalHolidays, setShowNationalHolidays] = useState(true);
   
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -347,13 +347,13 @@ export const App: React.FC = () => {
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Event Type</label>
                                         <select
                                             value={selectedTypeFilter}
-                                            onChange={(e) => setSelectedTypeFilter(e.target.value as 'JET' | 'AJET' | 'Other' | 'All')}
+                                            onChange={(e) => setSelectedTypeFilter(e.target.value as 'JET' | 'AJET' | 'Local Event' | 'All')}
                                             className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
                                         >
                                             <option value="All">All Types</option>
                                             <option value="JET">JET</option>
                                             <option value="AJET">AJET</option>
-                                            <option value="Other">Other</option>
+                                            <option value="Local Event">Local Event</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
