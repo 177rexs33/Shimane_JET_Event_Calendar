@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle } from 'lucide-react';
-import { CalendarEvent, Region } from './types';
+import { CalendarEvent, Region, REGION_CITIES } from './types';
 import { 
     generateCalendarGrid, 
     MONTH_NAMES, 
@@ -27,6 +27,7 @@ export const App: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<Region | 'All'>('All');
+  const [selectedCityFilter, setSelectedCityFilter] = useState<string>('Whole Region');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<'JET' | 'AJET' | 'Other' | 'All'>('All');
   const [showNationalHolidays, setShowNationalHolidays] = useState(true);
   
@@ -219,8 +220,9 @@ export const App: React.FC = () => {
   const approvedEvents = events.filter(e => {
       const isApproved = e.status === 'approved';
       const matchesRegion = selectedRegionFilter === 'All' || e.region === selectedRegionFilter;
+      const matchesCity = selectedCityFilter === 'Whole Region' || e.city === selectedCityFilter || e.city === 'Whole Region';
       const matchesType = selectedTypeFilter === 'All' || e.type === selectedTypeFilter;
-      return isApproved && matchesRegion && matchesType;
+      return isApproved && matchesRegion && matchesCity && matchesType;
   });
 
   return (
@@ -293,7 +295,7 @@ export const App: React.FC = () => {
                         <button 
                             onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
                             className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-white border rounded-lg transition-all shadow-sm hover:shadow-md h-[38px] w-[64px] sm:w-[120px] ${
-                                selectedRegionFilter !== 'All' || selectedTypeFilter !== 'All' 
+                                selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilter !== 'All' 
                                     ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100' 
                                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                             }`}
@@ -301,9 +303,9 @@ export const App: React.FC = () => {
                         >
                             <Filter size={16} className="shrink-0" />
                             <span className="hidden sm:inline">Filters</span>
-                            {(selectedRegionFilter !== 'All' || selectedTypeFilter !== 'All') && (
+                            {(selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilter !== 'All') && (
                                 <span className="flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full shrink-0">
-                                    {(selectedRegionFilter !== 'All' ? 1 : 0) + (selectedTypeFilter !== 'All' ? 1 : 0)}
+                                    {(selectedRegionFilter !== 'All' ? 1 : 0) + (selectedCityFilter !== 'Whole Region' ? 1 : 0) + (selectedTypeFilter !== 'All' ? 1 : 0)}
                                 </span>
                             )}
                         </button>
@@ -315,7 +317,10 @@ export const App: React.FC = () => {
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Region</label>
                                         <select
                                             value={selectedRegionFilter}
-                                            onChange={(e) => setSelectedRegionFilter(e.target.value as Region | 'All')}
+                                            onChange={(e) => {
+                                                setSelectedRegionFilter(e.target.value as Region | 'All');
+                                                setSelectedCityFilter('Whole Region');
+                                            }}
                                             className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
                                         >
                                             <option value="All">All Regions</option>
@@ -324,6 +329,20 @@ export const App: React.FC = () => {
                                             ))}
                                         </select>
                                     </div>
+                                    {selectedRegionFilter !== 'All' && selectedRegionFilter !== Region.OUTSIDE_SHIMANE && (
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">City</label>
+                                            <select
+                                                value={selectedCityFilter}
+                                                onChange={(e) => setSelectedCityFilter(e.target.value)}
+                                                className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+                                            >
+                                                {REGION_CITIES[selectedRegionFilter as Region].filter(city => city !== 'N/A').map((city) => (
+                                                    <option key={city} value={city}>{city}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
                                     <div className="space-y-2">
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Event Type</label>
                                         <select
@@ -352,17 +371,18 @@ export const App: React.FC = () => {
                                             </label>
                                         </div>
                                     </div>
-                                    {(selectedRegionFilter !== 'All' || selectedTypeFilter !== 'All' || !showNationalHolidays) && (
+                                    {(selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilter !== 'All' || !showNationalHolidays) && (
                                         <div className="pt-2 border-t border-gray-100">
                                             <button
                                                 onClick={() => {
                                                     setSelectedRegionFilter('All');
+                                                    setSelectedCityFilter('Whole Region');
                                                     setSelectedTypeFilter('All');
                                                     setShowNationalHolidays(true);
                                                 }}
                                                 className="w-full py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                             >
-                                                Clear Filters
+                                                Reset Filters
                                             </button>
                                         </div>
                                     )}

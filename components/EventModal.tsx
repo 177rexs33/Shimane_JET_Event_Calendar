@@ -566,25 +566,23 @@ export const EventModal: React.FC<EventModalProps> = ({
       {isReadOnly ? (
         <div className="space-y-6">
           <div className="space-y-4">
-            <div>
-              <div className="flex justify-between items-start gap-4">
-                <h4 className="text-2xl font-bold text-gray-900 break-words min-w-0 flex-1">{title}</h4>
-                <div className="flex items-center gap-1.5 text-gray-700 shrink-0 mt-1 flex-wrap justify-end">
-                  {existingEvent?.type && (
-                    <span className="text-sm font-medium px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md">{existingEvent.type}</span>
-                  )}
+            <div className="clearfix">
+              <div className="float-right flex flex-col items-end gap-1.5 text-gray-700 ml-4 mb-2">
+                <span className="text-sm font-medium px-2.5 py-1 bg-gray-100 rounded-md flex items-center gap-1.5">
+                  <Globe size={14} className="text-gray-500" />
+                  {existingEvent?.region}
+                </span>
+                {existingEvent?.city && existingEvent.city !== 'Whole Region' && existingEvent.city !== 'N/A' && (
                   <span className="text-sm font-medium px-2.5 py-1 bg-gray-100 rounded-md flex items-center gap-1.5">
-                    <Globe size={14} className="text-gray-500" />
-                    {existingEvent?.region}
+                    <MapPin size={14} className="text-gray-500" />
+                    {existingEvent.city}
                   </span>
-                  {existingEvent?.city && existingEvent.city !== 'Whole Region' && existingEvent.city !== 'N/A' && (
-                    <span className="text-sm font-medium px-2.5 py-1 bg-gray-100 rounded-md flex items-center gap-1.5">
-                      <MapPin size={14} className="text-gray-500" />
-                      {existingEvent.city}
-                    </span>
-                  )}
-                </div>
+                )}
+                {existingEvent?.type && (
+                  <span className="text-sm font-medium px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md">{existingEvent.type}</span>
+                )}
               </div>
+              <h4 className="text-2xl font-bold text-gray-900 break-words">{title}</h4>
 
               <div className="flex items-start gap-3 mt-4">
                 <CalendarIcon size={24} className="mt-1 text-gray-400 shrink-0" />
