@@ -308,7 +308,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [description, setDescription] = useState('');
   const [region, setRegion] = useState<Region | ''>('');
   const [city, setCity] = useState<string>('Whole Region');
-  const [type, setType] = useState<'JET' | 'AJET' | 'Local Event' | ''>('');
+  const [type, setType] = useState<'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other' | ''>('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
   
@@ -506,7 +506,7 @@ export const EventModal: React.FC<EventModalProps> = ({
       start: startIso,
       end: endIso,
       description,
-      type: type as 'JET' | 'AJET' | 'Local Event',
+      type: type as 'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other',
       region: region as Region,
       city,
       isAllDay,
@@ -879,7 +879,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         )}
 
         <div className="space-y-1">
-            <label className={`text-xs font-semibold uppercase tracking-wider ${formErrors.type ? 'text-red-500' : 'text-gray-500'}`}>Type *</label>
+            <label className={`text-xs font-semibold uppercase tracking-wider ${formErrors.type ? 'text-red-500' : 'text-gray-500'}`}>Event Category *</label>
             <div className="relative">
                 <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${formErrors.type ? 'text-red-400' : 'text-gray-400'}`}>
                     <Type size={16} />
@@ -887,7 +887,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                 <select
                     value={type}
                     onChange={(e) => {
-                        setType(e.target.value as 'JET' | 'AJET' | 'Local Event');
+                        setType(e.target.value as 'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other');
                         if (formErrors.type) setFormErrors(prev => ({ ...prev, type: false }));
                     }}
                     className={`w-full pl-10 pr-8 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:ring-2 focus:outline-none appearance-none transition-all cursor-pointer ${
@@ -900,6 +900,11 @@ export const EventModal: React.FC<EventModalProps> = ({
                     <option value="JET">JET</option>
                     <option value="AJET">AJET</option>
                     <option value="Local Event">Local Event</option>
+                    <option value="Festival">Festival</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Music">Music</option>
+                    <option value="Cultural Exchange">Cultural Exchange</option>
+                    <option value="Other">Other</option>
                 </select>
                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                     <ChevronDown size={16} />
