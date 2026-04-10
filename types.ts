@@ -1,11 +1,13 @@
 
 export type RecurrenceType = 'none' | 'monthly' | 'yearly';
 
+export type EventCategory = 'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other';
+
 export interface CalendarEvent {
   id: string;
   title: string;
   description?: string;
-  type?: 'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other';
+  types?: EventCategory[];
   start: string; // ISO 8601 date string
   end: string;   // ISO 8601 date string
   region: Region;

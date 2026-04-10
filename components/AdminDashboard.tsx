@@ -302,11 +302,11 @@ export const AdminDashboard: React.FC = () => {
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                                     <div className="space-y-3 flex-1 min-w-0">
                                         <div className="flex items-start justify-between md:justify-start gap-3 flex-wrap">
-                                            {event.type && (
-                                                <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
-                                                    {event.type}
+                                            {event.types && event.types.map(type => (
+                                                <span key={type} className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
+                                                    {type}
                                                 </span>
-                                            )}
+                                            ))}
                                             <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold ${getRegionClasses(event.region)}`}>
                                                 {event.region}
                                             </span>
@@ -396,11 +396,11 @@ export const AdminDashboard: React.FC = () => {
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                {event.type && (
-                                                    <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
-                                                        {event.type}
+                                                {event.types && event.types.map(type => (
+                                                    <span key={type} className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
+                                                        {type}
                                                     </span>
-                                                )}
+                                                ))}
                                                 {changes.region ? (
                                                     <div className="flex items-center gap-2 text-xs">
                                                         <span className={`px-2 py-0.5 rounded-md font-semibold opacity-50 ${original ? getRegionClasses(original.region) : ''}`}>
@@ -545,11 +545,11 @@ export const AdminDashboard: React.FC = () => {
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                     <div className="space-y-1 flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                            {event.type && (
-                                                <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded uppercase tracking-wider">
-                                                    {event.type}
+                                            {event.types && event.types.map(type => (
+                                                <span key={type} className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                                                    {type}
                                                 </span>
-                                            )}
+                                            ))}
                                             {event.originalData ? (
                                                 <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded uppercase tracking-wider">
                                                     Rejected Edit
@@ -636,11 +636,11 @@ export const AdminDashboard: React.FC = () => {
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                                     <div className="space-y-3 flex-1 min-w-0">
                                         <div className="flex items-start justify-between md:justify-start gap-3 flex-wrap">
-                                            {event.type && (
-                                                <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
-                                                    {event.type}
+                                            {event.types && event.types.map(type => (
+                                                <span key={type} className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
+                                                    {type}
                                                 </span>
-                                            )}
+                                            ))}
                                             <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold ${getRegionClasses(event.region)}`}>
                                                 {event.region}
                                             </span>

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle } from 'lucide-react';
-import { CalendarEvent, Region, REGION_CITIES } from './types';
+import { CalendarEvent, Region, REGION_CITIES, EventCategory } from './types';
 import { 
     generateCalendarGrid, 
     MONTH_NAMES, 
@@ -28,7 +28,7 @@ export const App: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<Region | 'All'>('All');
   const [selectedCityFilter, setSelectedCityFilter] = useState<string>('Whole Region');
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState<'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other' | 'All'>('All');
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState<EventCategory[]>([]);
   const [showNationalHolidays, setShowNationalHolidays] = useState(true);
   
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -221,7 +221,7 @@ export const App: React.FC = () => {
       const isApproved = e.status === 'approved';
       const matchesRegion = selectedRegionFilter === 'All' || e.region === selectedRegionFilter;
       const matchesCity = selectedCityFilter === 'Whole Region' || e.city === selectedCityFilter || e.city === 'Whole Region';
-      const matchesType = selectedTypeFilter === 'All' || e.type === selectedTypeFilter;
+      const matchesType = selectedTypeFilters.length === 0 || (e.types && selectedTypeFilters.every(filter => e.types!.includes(filter)));
       return isApproved && matchesRegion && matchesCity && matchesType;
   });
 
@@ -295,7 +295,7 @@ export const App: React.FC = () => {
                         <button 
                             onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
                             className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-white border rounded-lg transition-all shadow-sm hover:shadow-md h-[38px] w-[64px] sm:w-[120px] ${
-                                selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilter !== 'All' 
+                                selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilters.length > 0 
                                     ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100' 
                                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                             }`}
@@ -303,9 +303,9 @@ export const App: React.FC = () => {
                         >
                             <Filter size={16} className="shrink-0" />
                             <span className="hidden sm:inline">Filters</span>
-                            {(selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilter !== 'All') && (
+                            {(selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilters.length > 0) && (
                                 <span className="flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full shrink-0">
-                                    {(selectedRegionFilter !== 'All' ? 1 : 0) + (selectedCityFilter !== 'Whole Region' ? 1 : 0) + (selectedTypeFilter !== 'All' ? 1 : 0)}
+                                    {(selectedRegionFilter !== 'All' ? 1 : 0) + (selectedCityFilter !== 'Whole Region' ? 1 : 0) + selectedTypeFilters.length}
                                 </span>
                             )}
                         </button>
@@ -345,20 +345,40 @@ export const App: React.FC = () => {
                                     )}
                                     <div className="space-y-2">
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Event Category</label>
+                                        {selectedTypeFilters.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 mb-2">
+                                                {selectedTypeFilters.map(filter => (
+                                                    <span key={filter} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">
+                                                        {filter}
+                                                        <button
+                                                            onClick={() => setSelectedTypeFilters(prev => prev.filter(f => f !== filter))}
+                                                            className="text-blue-600 hover:text-blue-900 focus:outline-none"
+                                                        >
+                                                            &times;
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                         <select
-                                            value={selectedTypeFilter}
-                                            onChange={(e) => setSelectedTypeFilter(e.target.value as 'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other' | 'All')}
+                                            value=""
+                                            onChange={(e) => {
+                                                const val = e.target.value as EventCategory;
+                                                if (val && !selectedTypeFilters.includes(val)) {
+                                                    setSelectedTypeFilters(prev => [...prev, val]);
+                                                }
+                                            }}
                                             className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
                                         >
-                                            <option value="All">All Categories</option>
-                                            <option value="JET">JET</option>
-                                            <option value="AJET">AJET</option>
-                                            <option value="Local Event">Local Event</option>
-                                            <option value="Festival">Festival</option>
-                                            <option value="Sports">Sports</option>
-                                            <option value="Music">Music</option>
-                                            <option value="Cultural Exchange">Cultural Exchange</option>
-                                            <option value="Other">Other</option>
+                                            <option value="" disabled hidden>Select Category</option>
+                                            {!selectedTypeFilters.includes('JET') && <option value="JET">JET</option>}
+                                            {!selectedTypeFilters.includes('AJET') && <option value="AJET">AJET</option>}
+                                            {!selectedTypeFilters.includes('Local Event') && <option value="Local Event">Local Event</option>}
+                                            {!selectedTypeFilters.includes('Festival') && <option value="Festival">Festival</option>}
+                                            {!selectedTypeFilters.includes('Sports') && <option value="Sports">Sports</option>}
+                                            {!selectedTypeFilters.includes('Music') && <option value="Music">Music</option>}
+                                            {!selectedTypeFilters.includes('Cultural Exchange') && <option value="Cultural Exchange">Cultural Exchange</option>}
+                                            {!selectedTypeFilters.includes('Other') && <option value="Other">Other</option>}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
@@ -376,13 +396,13 @@ export const App: React.FC = () => {
                                             </label>
                                         </div>
                                     </div>
-                                    {(selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilter !== 'All' || !showNationalHolidays) && (
+                                    {(selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilters.length > 0 || !showNationalHolidays) && (
                                         <div className="pt-2 border-t border-gray-100">
                                             <button
                                                 onClick={() => {
                                                     setSelectedRegionFilter('All');
                                                     setSelectedCityFilter('Whole Region');
-                                                    setSelectedTypeFilter('All');
+                                                    setSelectedTypeFilters([]);
                                                     setShowNationalHolidays(true);
                                                 }}
                                                 className="w-full py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -563,7 +583,7 @@ export const App: React.FC = () => {
                                                         text-xs px-2 py-1 rounded-md font-medium border-l-2 hover:opacity-90 cursor-pointer flex items-center gap-1 overflow-hidden
                                                         ${getRegionClasses(event.region)}
                                                     `}
-                                                    title={`${event.type ? `[${event.type}] ` : ''}${event.title} (${event.isAllDay ? 'All Day' : formatTime(event.start)})${event.recurrence !== 'none' ? ' - Repeats ' + event.recurrence : ''}`}
+                                                    title={`${event.types && event.types.length > 0 ? `[${event.types.join(', ')}] ` : ''}${event.title} (${event.isAllDay ? 'All Day' : formatTime(event.start)})${event.recurrence !== 'none' ? ' - Repeats ' + event.recurrence : ''}`}
                                                 >
                                                     {event.isAllDay ? <span className="opacity-75 text-[10px] shrink-0 whitespace-nowrap font-semibold">All day</span> : <span className="opacity-75 text-[10px] shrink-0 whitespace-nowrap">{formatTime(event.start)}</span>}
                                                     <span className="truncate flex-1">{event.title}</span>

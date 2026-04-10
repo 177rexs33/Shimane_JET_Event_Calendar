@@ -308,7 +308,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [description, setDescription] = useState('');
   const [region, setRegion] = useState<Region | ''>('');
   const [city, setCity] = useState<string>('Whole Region');
-  const [type, setType] = useState<'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other' | ''>('');
+  const [types, setTypes] = useState<EventCategory[]>([]);
   const [isAllDay, setIsAllDay] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
   
@@ -355,7 +355,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         setDescription(existingEvent.description || '');
         setRegion(existingEvent.region || '');
         setCity(existingEvent.city || 'Whole Region');
-        setType(existingEvent.type || '');
+        setTypes(existingEvent.types || []);
         setIsAllDay(existingEvent.isAllDay);
         setRecurrence(existingEvent.recurrence || 'none');
       } else {
@@ -378,7 +378,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         setDescription('');
         setRegion('');
         setCity('Whole Region');
-        setType('');
+        setTypes([]);
         setIsAllDay(false);
         setRecurrence('none');
       }
@@ -465,7 +465,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     if (!title.trim()) errors.title = true;
     if (!startDate) errors.startDate = true;
     if (!endDate) errors.endDate = true;
-    if (!type) errors.type = true;
+    if (types.length === 0) errors.type = true;
     if (!region) errors.region = true;
     
     if (!isAllDay) {
@@ -506,7 +506,7 @@ export const EventModal: React.FC<EventModalProps> = ({
       start: startIso,
       end: endIso,
       description,
-      type: type as 'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other',
+      types,
       region: region as Region,
       city,
       isAllDay,
@@ -553,7 +553,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     setActiveDateField(field);
   };
 
-  const isFormValid = title.trim().length > 0 && startDate.length > 0 && endDate.length > 0 && type !== '' && region !== '' && !timeError;
+  const isFormValid = title.trim().length > 0 && startDate.length > 0 && endDate.length > 0 && types.length > 0 && region !== '' && !timeError;
 
   const isReadOnly = !isAdmin && existingEvent && !isSuggestingEdit;
 
@@ -578,9 +578,9 @@ export const EventModal: React.FC<EventModalProps> = ({
                     {existingEvent.city}
                   </span>
                 )}
-                {existingEvent?.type && (
-                  <span className="text-sm font-medium px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md">{existingEvent.type}</span>
-                )}
+                {existingEvent?.types && existingEvent.types.map(t => (
+                  <span key={t} className="text-sm font-medium px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md">{t}</span>
+                ))}
               </div>
               <h4 className="text-2xl font-bold text-gray-900 break-words">{title}</h4>
 
@@ -880,35 +880,56 @@ export const EventModal: React.FC<EventModalProps> = ({
 
         <div className="space-y-1">
             <label className={`text-xs font-semibold uppercase tracking-wider ${formErrors.type ? 'text-red-500' : 'text-gray-500'}`}>Event Category *</label>
-            <div className="relative">
-                <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${formErrors.type ? 'text-red-400' : 'text-gray-400'}`}>
-                    <Type size={16} />
+            <div className="flex flex-col gap-2">
+                {types.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                        {types.map(t => (
+                            <span key={t} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">
+                                {t}
+                                <button
+                                    type="button"
+                                    onClick={() => setTypes(prev => prev.filter(f => f !== t))}
+                                    className="text-blue-600 hover:text-blue-900 focus:outline-none"
+                                >
+                                    &times;
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+                )}
+                <div className="relative">
+                    <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${formErrors.type ? 'text-red-400' : 'text-gray-400'}`}>
+                        <Type size={16} />
+                    </div>
+                    <select
+                        value=""
+                        onChange={(e) => {
+                            const val = e.target.value as EventCategory;
+                            if (val && !types.includes(val)) {
+                                setTypes(prev => [...prev, val]);
+                            }
+                            if (formErrors.type) setFormErrors(prev => ({ ...prev, type: false }));
+                        }}
+                        className={`w-full pl-10 pr-8 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:ring-2 focus:outline-none appearance-none transition-all cursor-pointer ${
+                            formErrors.type 
+                                ? 'border-red-300 focus:ring-red-500 bg-red-50' 
+                                : 'border-gray-200 focus:ring-blue-500 focus:border-transparent'
+                        }`}
+                    >
+                        <option value="" disabled hidden>Select Category</option>
+                        {!types.includes('JET') && <option value="JET">JET</option>}
+                        {!types.includes('AJET') && <option value="AJET">AJET</option>}
+                        {!types.includes('Local Event') && <option value="Local Event">Local Event</option>}
+                        {!types.includes('Festival') && <option value="Festival">Festival</option>}
+                        {!types.includes('Sports') && <option value="Sports">Sports</option>}
+                        {!types.includes('Music') && <option value="Music">Music</option>}
+                        {!types.includes('Cultural Exchange') && <option value="Cultural Exchange">Cultural Exchange</option>}
+                        {!types.includes('Other') && <option value="Other">Other</option>}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                        <ChevronDown size={16} />
+                    </div>
                 </div>
-                <select
-                    value={type}
-                    onChange={(e) => {
-                        setType(e.target.value as 'JET' | 'AJET' | 'Local Event' | 'Festival' | 'Sports' | 'Music' | 'Cultural Exchange' | 'Other');
-                        if (formErrors.type) setFormErrors(prev => ({ ...prev, type: false }));
-                    }}
-                    className={`w-full pl-10 pr-8 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:ring-2 focus:outline-none appearance-none transition-all cursor-pointer ${
-                        formErrors.type 
-                            ? 'border-red-300 focus:ring-red-500 bg-red-50' 
-                            : 'border-gray-200 focus:ring-blue-500 focus:border-transparent'
-                    }`}
-                >
-                    <option value="" disabled hidden>Select one</option>
-                    <option value="JET">JET</option>
-                    <option value="AJET">AJET</option>
-                    <option value="Local Event">Local Event</option>
-                    <option value="Festival">Festival</option>
-                    <option value="Sports">Sports</option>
-                    <option value="Music">Music</option>
-                    <option value="Cultural Exchange">Cultural Exchange</option>
-                    <option value="Other">Other</option>
-                </select>
-                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                    <ChevronDown size={16} />
-                 </div>
             </div>
         </div>
 
