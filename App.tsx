@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle, List, Calendar as CalendarIcon } from 'lucide-react';
 import { CalendarEvent, Region, REGION_CITIES, EventCategory } from './types';
 import { 
     generateCalendarGrid, 
@@ -22,6 +22,8 @@ import { ContactModal } from './components/ContactModal';
 import { getEvents, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
 
 export const App: React.FC = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isEventView, setIsEventView] = useState(window.innerWidth < 768);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -50,6 +52,17 @@ export const App: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
 
   useEffect(() => {
     const updateScrollbarWidth = () => {
@@ -224,6 +237,93 @@ export const App: React.FC = () => {
       const matchesType = selectedTypeFilters.length === 0 || (e.types && selectedTypeFilters.every(filter => e.types!.includes(filter)));
       return isApproved && matchesRegion && matchesCity && matchesType;
   });
+
+  const renderEventView = () => {
+    const daysWithEvents = gridData.filter(cell => {
+      if (!cell.isCurrentMonth) return false;
+      const dayEvents = approvedEvents.filter(e => isEventActiveOnDate(cell.date, e));
+      return dayEvents.length > 0;
+    });
+
+    if (daysWithEvents.length === 0) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+          <CalendarIcon size={48} className="mb-4 opacity-20" />
+          <p className="text-lg font-medium">No events this month</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" ref={scrollContainerRef}>
+        {daysWithEvents.map((cell, index) => {
+          const isToday = isSameDay(cell.date, new Date());
+          const dayEvents = approvedEvents.filter(e => isEventActiveOnDate(cell.date, e))
+                                  .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+          
+          const year = cell.date.getFullYear();
+          const month = String(cell.date.getMonth() + 1).padStart(2, '0');
+          const day = String(cell.date.getDate()).padStart(2, '0');
+          const dateString = `${year}-${month}-${day}`;
+          const holidayName = showNationalHolidays ? holidays[dateString] : undefined;
+
+          return (
+            <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className={`px-4 py-3 border-b flex items-center justify-between ${isToday ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-gray-100'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg ${isToday ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 shadow-sm border border-gray-200'}`}>
+                    <span className="text-xs font-bold uppercase">{WEEK_DAYS[cell.date.getDay()].substring(0, 3)}</span>
+                    <span className="text-lg font-bold leading-none">{cell.date.getDate()}</span>
+                  </div>
+                  {holidayName && (
+                    <span className="text-xs font-medium px-2 py-1 bg-red-50 text-red-600 rounded-md border border-red-100">
+                      {getEnglishHolidayName(holidayName)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="p-2 space-y-2">
+                {dayEvents.map(event => (
+                  <div 
+                    key={event.id}
+                    onClick={() => setSelectedEvent(event)}
+                    className={`
+                      p-3 rounded-lg border-l-4 cursor-pointer hover:bg-gray-50 transition-colors
+                      ${getRegionClasses(event.region)}
+                    `}
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-semibold text-gray-900">{event.title}</span>
+                        <span className="text-xs font-medium text-gray-500 whitespace-nowrap shrink-0">
+                          {event.isAllDay ? 'All Day' : formatTime(event.start)}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {event.types && event.types.length > 0 && (
+                          <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                            {event.types.join(', ')}
+                          </span>
+                        )}
+                        <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                          {event.region}
+                        </span>
+                        {event.city && event.city !== 'Whole Region' && (
+                          <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                            {event.city}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 text-gray-900 font-sans">
@@ -448,6 +548,13 @@ export const App: React.FC = () => {
                                         Pending Requests
                                     </button>
                                     <button 
+                                        onClick={() => { setIsEventView(!isEventView); setIsMenuOpen(false); }}
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <List size={16} />
+                                        {isEventView ? 'Calendar View' : 'Event View'}
+                                    </button>
+                                    <button 
                                         onClick={() => { handleAdminAccess(); setIsMenuOpen(false); }} 
                                         className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                                     >
@@ -524,6 +631,8 @@ export const App: React.FC = () => {
              <div className="flex items-center justify-center h-full p-4 md:p-6">
                  <p className="text-gray-500">Please log in to view the dashboard.</p>
              </div>
+        ) : isEventView ? (
+            renderEventView()
         ) : (
             <>
                 <div className="w-full flex-1 flex flex-col overflow-auto" ref={scrollContainerRef}>
