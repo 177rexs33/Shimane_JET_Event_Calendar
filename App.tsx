@@ -136,6 +136,61 @@ export const App: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMonthPickerOpen, isMenuOpen, isFilterMenuOpen]);
 
+  useEffect(() => {
+    if (isEventView && view !== 'admin' && events.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const gridData = generateCalendarGrid(currentDate);
+      const approvedEvents = events.filter(e => {
+          const isApproved = e.status === 'approved';
+          const matchesRegion = selectedRegionFilter === 'All' || e.region === selectedRegionFilter;
+          const matchesCity = selectedCityFilter === 'Whole Region' || e.city === selectedCityFilter || e.city === 'Whole Region';
+          const matchesType = selectedTypeFilters.length === 0 || (e.types && selectedTypeFilters.every(filter => e.types!.includes(filter)));
+          return isApproved && matchesRegion && matchesCity && matchesType;
+      });
+
+      const daysWithEvents = gridData.filter(cell => {
+        if (!cell.isCurrentMonth) return false;
+        const dayEvents = approvedEvents.filter(e => isEventActiveOnDate(cell.date, e));
+        return dayEvents.length > 0;
+      });
+      
+      const upcomingDay = daysWithEvents.find(cell => {
+        const cellDate = new Date(cell.date);
+        cellDate.setHours(0, 0, 0, 0);
+        return cellDate.getTime() >= today.getTime();
+      });
+      
+      if (upcomingDay) {
+        const year = upcomingDay.date.getFullYear();
+        const month = String(upcomingDay.date.getMonth() + 1).padStart(2, '0');
+        const day = String(upcomingDay.date.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
+        
+        setTimeout(() => {
+          const element = document.getElementById(`event-day-${dateString}`);
+          if (element && scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const elementRect = element.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            // Only scroll if the element is not already visible at the top
+            if (elementRect.top < containerRect.top || elementRect.top > containerRect.bottom) {
+                container.scrollTop += (elementRect.top - containerRect.top) - 16;
+            }
+          }
+        }, 100);
+      }
+    }
+  }, [isEventView, view, currentDate, events.length, selectedRegionFilter, selectedCityFilter, selectedTypeFilters]);
+
+  useEffect(() => {
+    if (!isEventView && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [isEventView]);
+
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
@@ -268,7 +323,7 @@ export const App: React.FC = () => {
           const holidayName = showNationalHolidays ? holidays[dateString] : undefined;
 
           return (
-            <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div key={index} id={`event-day-${dateString}`} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <div className={`px-4 py-3 border-b flex items-center justify-between ${isToday ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-gray-100'}`}>
                 <div className="flex items-center gap-3">
                   <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg ${isToday ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 shadow-sm border border-gray-200'}`}>
@@ -286,7 +341,7 @@ export const App: React.FC = () => {
                 {dayEvents.map(event => (
                   <div 
                     key={event.id}
-                    onClick={() => setSelectedEvent(event)}
+                    onClick={(e) => handleEventClick(e, event)}
                     className={`
                       p-3 rounded-lg border-l-4 cursor-pointer hover:bg-gray-50 transition-colors
                       ${getRegionClasses(event.region)}
@@ -379,9 +434,15 @@ export const App: React.FC = () => {
                         <ChevronRight size={20} />
                     </button>
                 </div>
-                <button onClick={handleJumpToToday} className="px-4 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200">
-                    Today
-                </button>
+                {isEventView ? (
+                    <div className="px-4 py-1 text-xs font-medium text-gray-500">
+                        {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                ) : (
+                    <button onClick={handleJumpToToday} className="px-4 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200">
+                        Today
+                    </button>
+                )}
             </div>
         ) : (
             <div />
@@ -520,7 +581,7 @@ export const App: React.FC = () => {
                         <Plus size={20} />
                     </button>
 
-                    {isAdminSession ? (
+                    {isAdminSession && (
                         <button 
                             onClick={() => setView('admin')}
                             className="flex items-center justify-center p-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
@@ -528,32 +589,41 @@ export const App: React.FC = () => {
                         >
                             <ShieldCheck size={20} />
                         </button>
-                    ) : (
-                        <div className="relative" ref={menuRef}>
-                            <button 
-                                onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                                className="flex items-center justify-center p-2 text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
-                                title="Menu"
-                            >
-                                <Menu size={20} />
-                            </button>
-                            
-                            {isMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                    )}
+                    <div className="relative" ref={menuRef}>
+                        <button 
+                            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                            className="flex items-center justify-center p-2 text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
+                            title="Menu"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        
+                        {isMenuOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                                <button 
+                                    onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                                >
+                                    <Clock size={16} />
+                                    Pending Requests
+                                </button>
+                                <button 
+                                    onClick={() => { setIsEventView(!isEventView); setIsMenuOpen(false); }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    <List size={16} />
+                                    {isEventView ? 'Calendar View' : 'Event View'}
+                                </button>
+                                {isAdminSession ? (
                                     <button 
-                                        onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                                        onClick={() => { handleLogout(); setIsMenuOpen(false); }} 
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                                     >
-                                        <Clock size={16} />
-                                        Pending Requests
+                                        <LogOut size={16} />
+                                        Logout
                                     </button>
-                                    <button 
-                                        onClick={() => { setIsEventView(!isEventView); setIsMenuOpen(false); }}
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                    >
-                                        <List size={16} />
-                                        {isEventView ? 'Calendar View' : 'Event View'}
-                                    </button>
+                                ) : (
                                     <button 
                                         onClick={() => { handleAdminAccess(); setIsMenuOpen(false); }} 
                                         className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -561,26 +631,26 @@ export const App: React.FC = () => {
                                         <ShieldCheck size={16} />
                                         Admin Login
                                     </button>
-                                    <button 
-                                        onClick={() => { setIsPrivacyPolicyModalOpen(true); setIsMenuOpen(false); }} 
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                    >
-                                        <ShieldAlert size={16} />
-                                        Privacy Policy
-                                    </button>
-                                    <button 
-                                        onClick={() => { setIsContactModalOpen(true); setIsMenuOpen(false); }} 
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                                    >
-                                        <HelpCircle size={16} className="shrink-0" />
-                                        <span>
-                                            Request Feature/<br />Broken Site?
-                                        </span>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
+                                <button 
+                                    onClick={() => { setIsPrivacyPolicyModalOpen(true); setIsMenuOpen(false); }} 
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    <ShieldAlert size={16} />
+                                    Privacy Policy
+                                </button>
+                                <button 
+                                    onClick={() => { setIsContactModalOpen(true); setIsMenuOpen(false); }} 
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                                >
+                                    <HelpCircle size={16} className="shrink-0" />
+                                    <span>
+                                        Request Feature/<br />Broken Site?
+                                    </span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </>
             ) : (
                 <div className="flex items-center gap-2">
