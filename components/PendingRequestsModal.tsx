@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { CalendarEvent } from '../types';
-import { getPendingEvents, getEditedEvents } from '../lib/firebase';
-import { Clock, Edit3, Calendar as CalendarIcon, MapPin, Loader2 } from 'lucide-react';
+import { getPendingEvents, getEditedEvents, getPendingDeletedEvents } from '../lib/firebase';
+import { Clock, Edit3, Trash2, Calendar as CalendarIcon, MapPin, Loader2 } from 'lucide-react';
 import { formatTime, getRegionClasses } from '../utils/dateUtils';
 
 interface PendingRequestsModalProps {
@@ -11,9 +11,10 @@ interface PendingRequestsModalProps {
 }
 
 export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'pending' | 'edited'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'edited' | 'deleted'>('pending');
   const [pendingEvents, setPendingEvents] = useState<CalendarEvent[]>([]);
   const [editedEvents, setEditedEvents] = useState<CalendarEvent[]>([]);
+  const [deletedEvents, setDeletedEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,9 +23,10 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
     setLoading(true);
     let pendingLoaded = false;
     let editedLoaded = false;
+    let deletedLoaded = false;
 
     const checkLoading = () => {
-      if (pendingLoaded && editedLoaded) {
+      if (pendingLoaded && editedLoaded && deletedLoaded) {
         setLoading(false);
       }
     };
@@ -41,9 +43,16 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
       checkLoading();
     });
 
+    const unsubDeleted = getPendingDeletedEvents((events) => {
+      setDeletedEvents(events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()));
+      deletedLoaded = true;
+      checkLoading();
+    });
+
     return () => {
       unsubPending();
       unsubEdited();
+      unsubDeleted();
     };
   }, [isOpen]);
 
@@ -123,6 +132,22 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('deleted')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+              activeTab === 'deleted'
+                ? 'bg-white text-red-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+            }`}
+          >
+            <Trash2 size={16} />
+            Deletions
+            {deletedEvents.length > 0 && (
+              <span className="bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs">
+                {deletedEvents.length}
+              </span>
+            )}
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto min-h-[300px]">
@@ -142,13 +167,22 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
                     <p>No new event requests pending.</p>
                   </div>
                 )
-              ) : (
+              ) : activeTab === 'edited' ? (
                 editedEvents.length > 0 ? (
                   editedEvents.map(renderEventCard)
                 ) : (
                   <div className="text-center py-12 text-gray-500">
                     <Edit3 size={32} className="mx-auto mb-3 opacity-20" />
                     <p>No edit requests pending.</p>
+                  </div>
+                )
+              ) : (
+                deletedEvents.length > 0 ? (
+                  deletedEvents.map(renderEventCard)
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Trash2 size={32} className="mx-auto mb-3 opacity-20" />
+                    <p>No deletion requests pending.</p>
                   </div>
                 )
               )}

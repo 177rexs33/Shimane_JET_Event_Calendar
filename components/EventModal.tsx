@@ -530,6 +530,30 @@ export const EventModal: React.FC<EventModalProps> = ({
     onClose();
   };
 
+  const handleRequestDeletion = () => {
+    if (!existingEvent) return;
+    
+    const eventData = {
+      id: existingEvent.id,
+      title,
+      start: existingEvent.start,
+      end: existingEvent.end,
+      description,
+      types,
+      region: region as Region,
+      city,
+      isAllDay,
+      recurrence,
+    };
+
+    onSave({
+        ...eventData,
+        status: 'deleted',
+        originalData: existingEvent
+    });
+    onClose();
+  };
+
   const handleDateSelect = (field: 'start' | 'end', newDate: Date) => {
     const dateStr = toDateString(newDate);
     if (field === 'start') {
@@ -938,7 +962,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full animate-in fade-in slide-in-from-left-2 bg-red-50 p-2 rounded-lg border border-red-100 gap-2 sm:gap-0">
                     <span className="text-sm font-semibold text-red-700 flex items-center gap-2">
                         <AlertCircle size={16} />
-                        Confirm deletion?
+                        {isAdmin ? 'Confirm deletion?' : 'Confirm deletion request?'}
                     </span>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <button 
@@ -950,10 +974,16 @@ export const EventModal: React.FC<EventModalProps> = ({
                         </button>
                         <button 
                             type="button"
-                            onClick={() => onDelete && existingEvent && onDelete(existingEvent)}
+                            onClick={() => {
+                                if (isAdmin && onDelete && existingEvent) {
+                                    onDelete(existingEvent);
+                                } else {
+                                    handleRequestDeletion();
+                                }
+                            }}
                             className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors shadow-sm"
                         >
-                            Delete
+                            {isAdmin ? 'Delete' : 'Request Deletion'}
                         </button>
                     </div>
                 </div>
@@ -969,6 +999,16 @@ export const EventModal: React.FC<EventModalProps> = ({
                             >
                                 <Trash2 size={16} />
                                 Delete
+                            </button>
+                        )}
+                        {!isAdmin && existingEvent && isSuggestingEdit && (
+                            <button 
+                                type="button" 
+                                onClick={() => setIsDeleteConfirmOpen(true)}
+                                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                                <Trash2 size={16} />
+                                Request Deletion
                             </button>
                         )}
                     </div>

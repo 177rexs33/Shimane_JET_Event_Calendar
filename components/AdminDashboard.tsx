@@ -5,10 +5,12 @@ import {
     getPendingEvents, 
     getRejectedEvents, 
     getEditedEvents, 
+    getPendingDeletedEvents,
     getDeletedEvents,
     getVisitorCount,
     approvePendingEvent, 
     approveEditedEvent, 
+    approveDeletedEvent,
     rejectRequest,
     restoreRejectedEvent,
     restoreDeletedEvent,
@@ -18,11 +20,12 @@ import {
 import { Check, X, MapPin, Calendar as CalendarIcon, Loader2, ArrowRight, RotateCcw, FileText, Clock, Edit3, LayoutList, History, Trash2, AlertCircle, Users, Activity, BarChart2 } from 'lucide-react';
 import { formatFriendlyDate, formatTime, getRegionClasses } from '../utils/dateUtils';
 
-type Tab = 'new' | 'edits' | 'rejected' | 'deleted';
+type Tab = 'new' | 'edits' | 'pending_deleted' | 'rejected' | 'deleted';
 
 export const AdminDashboard: React.FC = () => {
   const [pendingEvents, setPendingEvents] = useState<CalendarEvent[]>([]);
   const [editedEvents, setEditedEvents] = useState<CalendarEvent[]>([]);
+  const [pendingDeletedEvents, setPendingDeletedEvents] = useState<CalendarEvent[]>([]);
   const [rejectedEvents, setRejectedEvents] = useState<CalendarEvent[]>([]);
   const [deletedEvents, setDeletedEvents] = useState<CalendarEvent[]>([]);
   const [visitorCount, setVisitorCount] = useState<number>(0);
@@ -40,6 +43,10 @@ export const AdminDashboard: React.FC = () => {
     const unsubscribeEdited = getEditedEvents((events) => {
       setEditedEvents(events);
     });
+
+    const unsubscribePendingDeleted = getPendingDeletedEvents((events) => {
+      setPendingDeletedEvents(events);
+    });
     
     const unsubscribeRejected = getRejectedEvents((events) => {
       setRejectedEvents(events);
@@ -56,6 +63,7 @@ export const AdminDashboard: React.FC = () => {
     return () => {
         unsubscribePending();
         unsubscribeEdited();
+        unsubscribePendingDeleted();
         unsubscribeRejected();
         unsubscribeDeleted();
         unsubscribeVisitors();
@@ -90,6 +98,20 @@ export const AdminDashboard: React.FC = () => {
           }
       } catch (e) {
           console.error("Failed to process edit approval", e);
+          alert("Failed to process action. Please try again.");
+      }
+  };
+
+  const handleDeletionApproval = async (event: CalendarEvent, approved: boolean) => {
+      try {
+          if (approved) {
+              await approveDeletedEvent(event);
+          } else {
+              // Reject the deletion request
+              await rejectRequest(event);
+          }
+      } catch (e) {
+          console.error("Failed to process deletion approval", e);
           alert("Failed to process action. Please try again.");
       }
   };
@@ -214,10 +236,10 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Tabs Header */}
-      <div className="flex items-center justify-center gap-1 p-1 bg-gray-100/80 rounded-xl mb-6 mx-auto overflow-x-auto w-fit max-w-[calc(100%-3rem)] mt-4 shrink-0 transition-colors duration-200">
+      <div className="flex flex-wrap items-center justify-center gap-1 p-1 bg-gray-100/80 rounded-xl mb-6 mx-auto w-fit max-w-full mt-4 shrink-0 transition-colors duration-200">
         <button
             onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'new' 
                 ? 'bg-white text-blue-700 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
@@ -226,14 +248,14 @@ export const AdminDashboard: React.FC = () => {
             <LayoutList size={16} className={activeTab === 'new' ? 'text-blue-500' : 'text-gray-400'} />
             New Requests
             {pendingEvents.length > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}>
                     {pendingEvents.length}
                 </span>
             )}
         </button>
         <button
             onClick={() => setActiveTab('edits')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'edits' 
                 ? 'bg-white text-amber-700 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
@@ -242,14 +264,30 @@ export const AdminDashboard: React.FC = () => {
             <Edit3 size={16} className={activeTab === 'edits' ? 'text-amber-500' : 'text-gray-400'} />
             Pending Edits
             {editedEvents.length > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'edits' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'edits' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'}`}>
                     {editedEvents.length}
                 </span>
             )}
         </button>
         <button
+            onClick={() => setActiveTab('pending_deleted')}
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                activeTab === 'pending_deleted' 
+                ? 'bg-white text-red-700 shadow-sm ring-1 ring-black/5' 
+                : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
+            }`}
+        >
+            <Trash2 size={16} className={activeTab === 'pending_deleted' ? 'text-red-500' : 'text-gray-400'} />
+            Pending Deletions
+            {pendingDeletedEvents.length > 0 && (
+                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'pending_deleted' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>
+                    {pendingDeletedEvents.length}
+                </span>
+            )}
+        </button>
+        <button
             onClick={() => setActiveTab('rejected')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'rejected' 
                 ? 'bg-white text-gray-800 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
@@ -258,14 +296,14 @@ export const AdminDashboard: React.FC = () => {
             <History size={16} className={activeTab === 'rejected' ? 'text-gray-800' : 'text-gray-400'} />
             Rejected History
             {rejectedEvents.length > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'rejected' ? 'bg-gray-100 text-gray-800' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'rejected' ? 'bg-gray-100 text-gray-800' : 'bg-gray-200 text-gray-600'}`}>
                     {rejectedEvents.length}
                 </span>
             )}
         </button>
         <button
             onClick={() => setActiveTab('deleted')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'deleted' 
                 ? 'bg-white text-red-800 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
@@ -274,7 +312,7 @@ export const AdminDashboard: React.FC = () => {
             <Trash2 size={16} className={activeTab === 'deleted' ? 'text-red-800' : 'text-gray-400'} />
             Deleted History
             {deletedEvents.length > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'deleted' ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'deleted' ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-600'}`}>
                     {deletedEvents.length}
                 </span>
             )}
@@ -527,6 +565,102 @@ export const AdminDashboard: React.FC = () => {
             </section>
         )}
 
+        {/* Pending Deleted Events Tab */}
+        {activeTab === 'pending_deleted' && (
+            <section className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {pendingDeletedEvents.length === 0 ? (
+                    <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-gray-300">
+                        <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4 text-red-300">
+                            <Trash2 size={32} />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900">No pending deletions</h3>
+                        <p className="text-gray-500 mt-1">There are no deletion requests waiting for approval.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-6">
+                        {pendingDeletedEvents.map((event) => {
+                            return (
+                                <div key={event.id} className="bg-white rounded-xl border border-red-200 shadow-sm relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-1.5 h-full bg-red-400"></div>
+                                    
+                                    <div className="p-5 flex flex-col gap-4">
+                                        {/* Header: Status and Region */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-red-600 uppercase tracking-wide bg-red-50 px-2 py-1 rounded">
+                                                    Deletion Request
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                {event.types && event.types.map(type => (
+                                                    <span key={type} className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
+                                                        {type}
+                                                    </span>
+                                                ))}
+                                                <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${getRegionClasses(event.region)}`}>
+                                                    {event.region}
+                                                </span>
+                                                {event.city && event.city !== 'Whole Region' && (
+                                                    <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-800">
+                                                        {event.city}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Title */}
+                                        <div className="min-w-0">
+                                            <h3 className="text-lg font-bold text-gray-900 leading-tight truncate max-w-full">{event.title}</h3>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {/* Description */}
+                                            <div className="p-3 rounded-lg bg-gray-50">
+                                                <div className="flex items-center gap-2 mb-1.5">
+                                                    <FileText size={14} className="text-gray-400" />
+                                                    <span className="text-xs font-semibold text-gray-500 uppercase">Description</span>
+                                                </div>
+                                                <p className="text-sm text-gray-600">{event.description || <span className="italic text-gray-400">No description</span>}</p>
+                                            </div>
+
+                                            {/* Time */}
+                                            <div className="p-3 rounded-lg bg-gray-50">
+                                                <div className="flex items-center gap-2 mb-1.5">
+                                                    <Clock size={14} className="text-gray-400" />
+                                                    <span className="text-xs font-semibold text-gray-500 uppercase">Date & Time</span>
+                                                </div>
+                                                <div className="text-sm text-gray-600">
+                                                    {renderTime(event)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions Footer */}
+                                    <div className="bg-gray-50 px-5 py-3 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
+                                        <button 
+                                            onClick={() => handleDeletionApproval(event, false)}
+                                            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 bg-white hover:bg-gray-50 hover:text-red-600 hover:border-red-200 font-medium text-sm transition-colors w-full sm:w-auto"
+                                        >
+                                            <RotateCcw size={16} />
+                                            Reject Deletion
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeletionApproval(event, true)}
+                                            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow font-medium text-sm transition-all w-full sm:w-auto"
+                                        >
+                                            <Trash2 size={16} />
+                                            Approve Deletion
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
+        )}
+
         {/* Rejected Events Tab */}
         {activeTab === 'rejected' && (
             <section className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -550,7 +684,11 @@ export const AdminDashboard: React.FC = () => {
                                                     {type}
                                                 </span>
                                             ))}
-                                            {event.originalData ? (
+                                            {(event as any).originalPendingStatus === 'deleted' ? (
+                                                <span className="text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                                                    Rejected Deletion
+                                                </span>
+                                            ) : event.originalData ? (
                                                 <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded uppercase tracking-wider">
                                                     Rejected Edit
                                                 </span>

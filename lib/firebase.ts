@@ -250,6 +250,21 @@ export const getEditedEvents = (onUpdate: (events: CalendarEvent[]) => void) => 
   return unsubscribe;
 };
 
+// Get deleted events from 'pending_events'
+export const getPendingDeletedEvents = (onUpdate: (events: CalendarEvent[]) => void) => {
+  const q = query(collection(db, "pending_events"), where("status", "==", "deleted"));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const events: CalendarEvent[] = [];
+    snapshot.forEach((doc) => {
+      events.push({ ...doc.data(), id: doc.id } as CalendarEvent);
+    });
+    onUpdate(events);
+  }, (error) => {
+    handleFirestoreError(error, OperationType.LIST, "pending_events");
+  });
+  return unsubscribe;
+};
+
 // Get rejected events from 'rejected_events'
 export const getRejectedEvents = (onUpdate: (events: CalendarEvent[]) => void) => {
   const q = query(collection(db, "rejected_events"));
@@ -294,7 +309,7 @@ export const updateEvent = async (event: CalendarEvent) => {
   try {
     const uid = auth.currentUser?.uid;
 
-    if (event.status === 'edited') {
+    if (event.status === 'edited' || event.status === 'deleted') {
         const { id, ...data } = event;
         await addDoc(collection(db, "pending_events"), {
             ...data,
@@ -311,7 +326,7 @@ export const updateEvent = async (event: CalendarEvent) => {
         } as any);
     }
   } catch (e) {
-    handleFirestoreError(e, OperationType.UPDATE, event.status === 'edited' ? 'pending_events' : `events/${event.id}`);
+    handleFirestoreError(e, OperationType.UPDATE, (event.status === 'edited' || event.status === 'deleted') ? 'pending_events' : `events/${event.id}`);
   }
 };
 
@@ -350,12 +365,39 @@ export const approveEditedEvent = async (event: CalendarEvent) => {
     }
 };
 
+export const approveDeletedEvent = async (event: CalendarEvent) => {
+    try {
+        const { id, originalId } = event as any;
+        if (!originalId) throw new Error("Missing originalId for deleted event");
+
+        const adminUid = auth.currentUser?.uid;
+        
+        // 1. Add to deleted_events collection
+        await addDoc(collection(db, "deleted_events"), {
+            ...event.originalData,
+            originalId: originalId,
+            adminUid: adminUid,
+            deletedAt: serverTimestamp(),
+            status: 'deleted'
+        });
+        
+        // 2. Remove from active events collection
+        await deleteDoc(doc(db, "events", originalId));
+        
+        // 3. Remove from pending_events
+        await deleteDoc(doc(db, "pending_events", id));
+    } catch (e) {
+        handleFirestoreError(e, OperationType.UPDATE, `pending_events/${event.id}`);
+    }
+};
+
 export const rejectRequest = async (event: CalendarEvent) => {
     try {
         const { id, ...data } = event;
         const adminUid = auth.currentUser?.uid;
         await addDoc(collection(db, "rejected_events"), {
             ...data,
+            originalPendingStatus: event.status, // Save the status it had in pending_events
             status: 'rejected',
             adminUid: adminUid,
             rejectedAt: serverTimestamp()
@@ -368,11 +410,14 @@ export const rejectRequest = async (event: CalendarEvent) => {
 
 export const restoreRejectedEvent = async (event: CalendarEvent) => {
     try {
-        const { id, ...data } = event;
+        const { id, originalPendingStatus, ...data } = event as any;
         const adminUid = auth.currentUser?.uid;
+        
+        let restoredStatus = originalPendingStatus || (event.originalData ? 'edited' : 'pending');
+        
         await addDoc(collection(db, "pending_events"), {
             ...data,
-            status: event.originalData ? 'edited' : 'pending',
+            status: restoredStatus,
             restoredByAdminUid: adminUid,
             restoredAt: serverTimestamp()
         });
