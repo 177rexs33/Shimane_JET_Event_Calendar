@@ -187,7 +187,7 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-full">
       {/* Analytics Overview */}
-      <div className="mx-4 md:mx-6 mt-4 md:mt-6 flex flex-wrap items-center gap-4">
+      <div className="mx-4 md:mx-6 mt-4 md:mt-6 flex flex-wrap items-center justify-center gap-4">
         {/* Visitor Count */}
         <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit">
           <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
