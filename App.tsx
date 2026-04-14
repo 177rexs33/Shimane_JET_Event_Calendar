@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle, List, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle, List, Calendar as CalendarIcon, Search } from 'lucide-react';
 import { CalendarEvent, Region, REGION_CITIES, EventCategory } from './types';
 import { 
     generateCalendarGrid, 
@@ -19,6 +19,7 @@ import { LoginModal } from './components/LoginModal';
 import { PendingRequestsModal } from './components/PendingRequestsModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { ContactModal } from './components/ContactModal';
+import { SearchModal } from './components/SearchModal';
 import { getEvents, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
 
 export const App: React.FC = () => {
@@ -39,6 +40,7 @@ export const App: React.FC = () => {
   const [isPendingRequestsModalOpen, setIsPendingRequestsModalOpen] = useState(false);
   const [isPrivacyPolicyModalOpen, setIsPrivacyPolicyModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   
@@ -602,6 +604,13 @@ export const App: React.FC = () => {
                         {isMenuOpen && (
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
                                 <button 
+                                    onClick={() => { setIsSearchModalOpen(true); setIsMenuOpen(false); }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors"
+                                >
+                                    <Search size={16} />
+                                    Search Events
+                                </button>
+                                <button 
                                     onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
                                     className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
                                 >
@@ -817,6 +826,16 @@ export const App: React.FC = () => {
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
+      />
+
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        events={events}
+        onEventClick={(event) => {
+          setSelectedEvent(event);
+          setIsEventModalOpen(true);
+        }}
       />
     </div>
   );

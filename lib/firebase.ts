@@ -107,75 +107,35 @@ export const db = getFirestore(app);
 
 let isAuthenticating = false;
 
-(async () => {
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-  } catch (error: any) {
-    if (error.code !== 'auth/already-initialized') {
-      console.error("Persistence error, falling back to inMemory:", error);
-      try {
-        await setPersistence(auth, inMemoryPersistence);
-      } catch (fallbackError) {
-        console.error("Fallback persistence error:", fallbackError);
-      }
-    }
-  }
-
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      sessionStorage.removeItem('auth_restore_state');
-      try {
-        const visitorRef = doc(db, 'visitors', user.uid);
-        await setDoc(visitorRef, {
-          lastVisit: serverTimestamp(),
-          visitCount: increment(1)
-        }, { merge: true });
-      } catch (err) {
-        console.error("Error tracking visitor:", err);
-      }
-    } else {
-      if (isAuthenticating) return;
-      isAuthenticating = true;
-      let isReloading = false;
-      try {
-        const restoreState = sessionStorage.getItem('auth_restore_state');
-        
-        if (restoreState !== 'tried_both') {
-          const restored = await restoreAnonymousUser(restoreState);
-          if (restored) {
-            // If restored, we need to reload the page so Firebase Auth picks it up
-            isReloading = true;
-            window.location.reload();
-            return;
-          }
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const visitorRef = doc(db, 'visitors', user.uid);
+          await setDoc(visitorRef, {
+            lastVisit: serverTimestamp(),
+            visitCount: increment(1)
+          }, { merge: true });
+        } catch (err) {
+          console.error("Error tracking visitor:", err);
         }
-        
-        sessionStorage.removeItem('auth_restore_state');
-        
-        let retries = 3;
-        while (retries > 0) {
-          try {
-            await signInAnonymously(auth);
-            break;
-          } catch (err: any) {
-            if (err.code === 'auth/network-request-failed' && retries > 1) {
-              retries--;
-              await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries))); // Exponential backoff
-            } else {
-              throw err;
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error signing in anonymously:", err);
-      } finally {
-        if (!isReloading) {
+      } else {
+        if (isAuthenticating) return;
+        isAuthenticating = true;
+        try {
+          await signInAnonymously(auth);
+        } catch (err) {
+          console.error("Error signing in anonymously:", err);
+        } finally {
           isAuthenticating = false;
         }
       }
-    }
+    });
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
   });
-})();
 
 export { signInWithEmailAndPassword, onAuthStateChanged, signOut };
 
