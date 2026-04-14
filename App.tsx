@@ -20,6 +20,7 @@ import { PendingRequestsModal } from './components/PendingRequestsModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { ContactModal } from './components/ContactModal';
 import { SearchModal } from './components/SearchModal';
+import { DayViewModal } from './components/DayViewModal';
 import { getEvents, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
 
 export const App: React.FC = () => {
@@ -41,6 +42,9 @@ export const App: React.FC = () => {
   const [isPrivacyPolicyModalOpen, setIsPrivacyPolicyModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isDayViewModalOpen, setIsDayViewModalOpen] = useState(false);
+  const [selectedDayViewDate, setSelectedDayViewDate] = useState<Date | null>(null);
+  const [eventModalSource, setEventModalSource] = useState<'calendar' | 'dayView' | 'search' | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   
@@ -208,6 +212,7 @@ export const App: React.FC = () => {
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
     setSelectedEvent(null);
+    setEventModalSource('calendar');
     setIsEventModalOpen(true);
   };
 
@@ -215,6 +220,7 @@ export const App: React.FC = () => {
     e.stopPropagation();
     setSelectedEvent(event);
     setSelectedDate(new Date(event.start));
+    setEventModalSource('calendar');
     setIsEventModalOpen(true);
   };
 
@@ -249,6 +255,12 @@ export const App: React.FC = () => {
     try {
         await softDeleteEvent(event);
         setIsEventModalOpen(false);
+        if (eventModalSource === 'dayView') {
+          setIsDayViewModalOpen(true);
+        } else if (eventModalSource === 'search') {
+          setIsSearchModalOpen(true);
+        }
+        setEventModalSource(null);
         setSelectedEvent(null);
     } catch (error) {
         console.error("Failed to delete event", error);
@@ -579,7 +591,7 @@ export const App: React.FC = () => {
                         )}
                     </div>
 
-                    <button onClick={() => { setSelectedDate(null); setSelectedEvent(null); setIsEventModalOpen(true); }} className="flex items-center justify-center p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-100 hover:shadow-lg">
+                    <button onClick={() => { setSelectedDate(null); setSelectedEvent(null); setEventModalSource('calendar'); setIsEventModalOpen(true); }} className="flex items-center justify-center p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-100 hover:shadow-lg">
                         <Plus size={20} />
                     </button>
 
@@ -737,9 +749,13 @@ export const App: React.FC = () => {
                                 return (
                                     <div 
                                         key={index} 
+                                        onClick={() => {
+                                            setSelectedDayViewDate(cell.date);
+                                            setIsDayViewModalOpen(true);
+                                        }}
                                         className={`
                                             relative bg-white rounded-2xl p-2 border border-gray-100 
-                                            transition-all hover:shadow-md flex flex-col gap-1 overflow-hidden group
+                                            transition-all hover:shadow-md flex flex-col gap-1 overflow-hidden group cursor-pointer
                                             ${!cell.isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : 'text-gray-700'}
                                             ${isToday ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
                                             ${holidayName ? 'holiday' : ''}
@@ -799,7 +815,15 @@ export const App: React.FC = () => {
 
       <EventModal 
         isOpen={isEventModalOpen}
-        onClose={() => setIsEventModalOpen(false)}
+        onClose={() => {
+          setIsEventModalOpen(false);
+          if (eventModalSource === 'dayView') {
+            setIsDayViewModalOpen(true);
+          } else if (eventModalSource === 'search') {
+            setIsSearchModalOpen(true);
+          }
+          setEventModalSource(null);
+        }}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
         initialDate={selectedDate}
@@ -834,6 +858,19 @@ export const App: React.FC = () => {
         events={events}
         onEventClick={(event) => {
           setSelectedEvent(event);
+          setEventModalSource('search');
+          setIsEventModalOpen(true);
+        }}
+      />
+
+      <DayViewModal
+        isOpen={isDayViewModalOpen}
+        onClose={() => setIsDayViewModalOpen(false)}
+        date={selectedDayViewDate}
+        events={events}
+        onEventClick={(event) => {
+          setSelectedEvent(event);
+          setEventModalSource('dayView');
           setIsEventModalOpen(true);
         }}
       />

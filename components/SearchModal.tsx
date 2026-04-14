@@ -24,13 +24,6 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, event
     );
   }, [events, searchQuery]);
 
-  // Reset search when modal closes
-  React.useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery('');
-    }
-  }, [isOpen]);
-
   const renderTime = (e: CalendarEvent | undefined) => {
       if (!e) return null;
       return (
