@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle, List, Calendar as CalendarIcon, Search } from 'lucide-react';
 import { CalendarEvent, Region, REGION_CITIES, EventCategory } from './types';
 import { 
@@ -394,6 +394,15 @@ export const App: React.FC = () => {
     );
   };
 
+  const selectedDayHoliday = useMemo(() => {
+    if (!selectedDayViewDate || !showNationalHolidays) return undefined;
+    const year = selectedDayViewDate.getFullYear();
+    const month = String(selectedDayViewDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDayViewDate.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    return holidays[dateString];
+  }, [selectedDayViewDate, showNationalHolidays, holidays]);
+
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 text-gray-900 font-sans">
       <div className="flex-none z-30 flex flex-col shadow-sm">
@@ -591,8 +600,12 @@ export const App: React.FC = () => {
                         )}
                     </div>
 
-                    <button onClick={() => { setSelectedDate(null); setSelectedEvent(null); setEventModalSource('calendar'); setIsEventModalOpen(true); }} className="flex items-center justify-center p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-100 hover:shadow-lg">
+                    <button onClick={() => { setSelectedDate(null); setSelectedEvent(null); setEventModalSource('calendar'); setIsEventModalOpen(true); }} className="flex items-center justify-center p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-100 hover:shadow-lg" title="New Event">
                         <Plus size={20} />
+                    </button>
+
+                    <button onClick={() => setIsSearchModalOpen(true)} className="flex items-center justify-center p-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md" title="Search Events">
+                        <Search size={20} />
                     </button>
 
                     {isAdminSession && (
@@ -615,13 +628,6 @@ export const App: React.FC = () => {
                         
                         {isMenuOpen && (
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                                <button 
-                                    onClick={() => { setIsSearchModalOpen(true); setIsMenuOpen(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors"
-                                >
-                                    <Search size={16} />
-                                    Search Events
-                                </button>
                                 <button 
                                     onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
                                     className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
@@ -754,48 +760,76 @@ export const App: React.FC = () => {
                                             setIsDayViewModalOpen(true);
                                         }}
                                         className={`
-                                            relative bg-white rounded-2xl p-2 border border-gray-100 
-                                            transition-all hover:shadow-md flex flex-col gap-1 overflow-hidden group cursor-pointer
+                                            relative bg-white rounded-2xl p-1.5 border border-gray-100 
+                                            transition-all hover:shadow-md flex flex-col gap-0.5 overflow-hidden group cursor-pointer
                                             ${!cell.isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : 'text-gray-700'}
                                             ${isToday ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
                                             ${holidayName ? 'holiday' : ''}
                                         `}
                                     >
                                         <div className="flex justify-between items-start">
-                                            <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? 'bg-red-600 text-white' : ''}`}>
+                                            <span className={`text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? 'bg-red-600 text-white' : ''}`}>
                                                 {cell.date.getDate()}
                                             </span>
                                             {holidayName && (
                                                 <div className="flex flex-col items-end ml-1 flex-1 overflow-hidden">
-                                                    <span className="text-[10px] font-semibold truncate w-full text-right leading-tight holiday-text">
+                                                    <span className="text-[9px] font-semibold truncate w-full text-right leading-tight holiday-text">
                                                         {holidayName}
                                                     </span>
-                                                    <span className="text-[9px] opacity-75 truncate w-full text-right leading-tight holiday-text">
+                                                    <span className="text-[8px] opacity-75 truncate w-full text-right leading-tight holiday-text">
                                                         {getEnglishHolidayName(holidayName)}
                                                     </span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className="flex-1 flex flex-col gap-1 overflow-y-auto overflow-x-hidden custom-scrollbar mt-1">
-                                            {dayEvents.map(event => (
-                                                <div 
-                                                    key={event.id}
-                                                    data-id={event.id}
-                                                    onClick={(e) => handleEventClick(e, event)}
-                                                    className={`
-                                                        text-xs px-2 py-1 rounded-md font-medium border-l-2 hover:opacity-90 cursor-pointer flex items-center gap-1 overflow-hidden
-                                                        ${getRegionClasses(event.region)}
-                                                    `}
-                                                    title={`${event.types && event.types.length > 0 ? `[${event.types.join(', ')}] ` : ''}${event.title} (${event.isAllDay ? 'All Day' : formatTime(event.start)})${event.recurrence !== 'none' ? ' - Repeats ' + event.recurrence : ''}`}
-                                                >
-                                                    {event.isAllDay ? <span className="opacity-75 text-[10px] shrink-0 whitespace-nowrap font-semibold">All day</span> : <span className="opacity-75 text-[10px] shrink-0 whitespace-nowrap">{formatTime(event.start)}</span>}
-                                                    <span className="truncate flex-1">{event.title}</span>
-                                                    {event.recurrence && event.recurrence !== 'none' && (
-                                                        <Repeat size={10} className="shrink-0 opacity-60" />
-                                                    )}
+                                        <div className="flex-1 flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden custom-scrollbar mt-0.5">
+                                            {dayEvents.length > 3 ? (
+                                                <div className="flex-1 flex flex-col justify-center min-h-0">
+                                                    <div className="grid grid-cols-2 gap-1">
+                                                        {Object.entries(
+                                                            dayEvents.reduce((acc, event) => {
+                                                                acc[event.region] = (acc[event.region] || 0) + 1;
+                                                                return acc;
+                                                            }, {} as Record<string, number>)
+                                                        ).map(([region, count]) => {
+                                                            const shortName = region.split(' ')[0];
+                                                            return (
+                                                                <div 
+                                                                    key={region}
+                                                                    title={`${region}: ${count} events`}
+                                                                    className={`
+                                                                        flex flex-col items-center justify-center py-1 px-0.5 rounded-[6px] border
+                                                                        ${getRegionClasses(region as Region)}
+                                                                    `}
+                                                                >
+                                                                    <span className="text-[8px] font-bold uppercase tracking-tight leading-none opacity-80 mb-0.5 truncate w-full text-center">{shortName}</span>
+                                                                    <span className="text-[12px] font-bold leading-none">{count}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
-                                            ))}
+                                            ) : (
+                                                dayEvents.map(event => (
+                                                    <div 
+                                                        key={event.id}
+                                                        data-id={event.id}
+                                                        onClick={(e) => handleEventClick(e, event)}
+                                                        className={`
+                                                            text-xs px-2 py-1 rounded-md font-medium border-l-2 hover:opacity-90 cursor-pointer flex items-center gap-1 overflow-hidden
+                                                            ${getRegionClasses(event.region)}
+                                                        `}
+                                                        title={`${event.types && event.types.length > 0 ? `[${event.types.join(', ')}] ` : ''}${event.title} (${event.isAllDay ? 'All Day' : formatTime(event.start)})${event.recurrence !== 'none' ? ' - Repeats ' + event.recurrence : ''}`}
+                                                    >
+                                                        {event.isAllDay ? <span className="opacity-75 text-[10px] shrink-0 whitespace-nowrap font-semibold">All day</span> : <span className="opacity-75 text-[10px] shrink-0 whitespace-nowrap">{formatTime(event.start)}</span>}
+                                                        <span className="truncate flex-1">{event.title}</span>
+                                                        {event.recurrence && event.recurrence !== 'none' && (
+                                                            <Repeat size={10} className="shrink-0 opacity-60" />
+                                                        )}
+                                                    </div>
+                                                ))
+                                            )}
                                         </div>
                                         
                                         <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
@@ -868,6 +902,7 @@ export const App: React.FC = () => {
         onClose={() => setIsDayViewModalOpen(false)}
         date={selectedDayViewDate}
         events={events}
+        holidayName={selectedDayHoliday}
         onEventClick={(event) => {
           setSelectedEvent(event);
           setEventModalSource('dayView');

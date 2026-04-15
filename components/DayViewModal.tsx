@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Modal } from './Modal';
 import { CalendarEvent } from '../types';
-import { getRegionClasses, formatTime, isEventActiveOnDate } from '../utils/dateUtils';
+import { getRegionClasses, formatTime, isEventActiveOnDate, getEnglishHolidayName } from '../utils/dateUtils';
 import { Clock, Repeat } from 'lucide-react';
 
 interface DayViewModalProps {
@@ -10,9 +10,10 @@ interface DayViewModalProps {
   date: Date | null;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
+  holidayName?: string;
 }
 
-export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, date, events, onEventClick }) => {
+export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, date, events, onEventClick, holidayName }) => {
   const dayEvents = useMemo(() => {
     if (!date) return [];
     return events.filter(event => event.status === 'approved' && isEventActiveOnDate(date, event));
@@ -23,7 +24,21 @@ export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, dat
 
   if (!date) return null;
 
-  const title = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const title = (
+    <div className="flex flex-col">
+      <span>{date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+      {holidayName && (
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-xs font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded-md border border-red-200">
+            {holidayName}
+          </span>
+          <span className="text-xs font-medium text-red-600">
+            {getEnglishHolidayName(holidayName)}
+          </span>
+        </div>
+      )}
+    </div>
+  );
 
   // 60 pixels per hour
   const HOUR_HEIGHT = 60;
