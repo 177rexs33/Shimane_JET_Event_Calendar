@@ -407,10 +407,10 @@ export const App: React.FC = () => {
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 text-gray-900 font-sans">
       <div className="flex-none z-30 flex flex-col shadow-sm">
         <header 
-            className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-2 flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center gap-3"
-            style={{ paddingRight: `calc(1.5rem + ${scrollbarWidth}px)` }}
+            className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-1.5 flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center gap-2"
+            style={{ paddingRight: `calc(1rem + ${scrollbarWidth}px)` }}
         >
-          <div className="flex items-center gap-3 justify-self-start min-w-0 w-full">
+          <div className="flex items-center gap-2 justify-self-start min-w-0 w-full">
             <a 
                 href="https://shimaneparesources.wordpress.com/" 
                 target="_blank" 
@@ -421,12 +421,12 @@ export const App: React.FC = () => {
                 <img 
                     src="https://github.com/user-attachments/assets/c39f0492-fddb-4772-9774-2ca0ae1d1f39" 
                     alt="Shimane PA Logo" 
-                    className="h-10 w-auto object-contain"
+                    className="h-8 w-auto object-contain"
                     referrerPolicy="no-referrer"
                 />
             </a>
             <h1 
-                className="text-lg font-bold tracking-tight text-gray-800 cursor-pointer truncate"
+                className="text-base font-bold tracking-tight text-gray-800 cursor-pointer truncate"
                 onClick={() => setView('calendar')}
             >
                 Shimane JET Event Calendar
@@ -434,38 +434,27 @@ export const App: React.FC = () => {
         </div>
 
         {view === 'calendar' ? (
-            <div className="flex flex-col items-center gap-1 justify-self-center">
-                <div className="flex items-center gap-2 sm:gap-4 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-200/50 w-full sm:w-auto justify-center">
-                    <button onClick={handlePrevMonth} className="p-2 hover:bg-white rounded-xl text-gray-600 transition-all shadow-sm hover:shadow-md">
-                        <ChevronLeft size={20} />
+            <div className="flex items-center gap-2 sm:gap-4 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-200/50 w-full sm:w-auto justify-self-center justify-center">
+                <button onClick={handlePrevMonth} className="p-2 hover:bg-white rounded-xl text-gray-600 transition-all shadow-sm hover:shadow-md">
+                    <ChevronLeft size={20} />
+                </button>
+                <div className="relative" ref={monthPickerRef}>
+                    <button onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)} className="px-2 sm:px-3 py-1 hover:bg-white rounded-xl text-gray-800 transition-all shadow-sm hover:shadow-md border border-transparent hover:border-gray-200 w-[120px] sm:w-[180px] min-h-[48px] flex items-center justify-center">
+                        <span className="text-base sm:text-lg font-semibold select-none text-center leading-tight flex flex-wrap justify-center items-center gap-x-1">
+                            <span>{MONTH_NAMES[currentDate.getMonth()]}</span>
+                            <span>{currentDate.getFullYear()}</span>
+                        </span>
                     </button>
-                    <div className="relative" ref={monthPickerRef}>
-                        <button onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)} className="px-2 sm:px-3 py-1 hover:bg-white rounded-xl text-gray-800 transition-all shadow-sm hover:shadow-md border border-transparent hover:border-gray-200 w-[120px] sm:w-[180px] min-h-[48px] flex items-center justify-center">
-                            <span className="text-base sm:text-lg font-semibold select-none text-center leading-tight flex flex-wrap justify-center items-center gap-x-1">
-                                <span>{MONTH_NAMES[currentDate.getMonth()]}</span>
-                                <span>{currentDate.getFullYear()}</span>
-                            </span>
-                        </button>
-                        {isMonthPickerOpen && (
-                            <MonthYearSelector 
-                                currentDate={currentDate} 
-                                onChange={(date) => { setCurrentDate(date); setIsMonthPickerOpen(false); }}
-                            />
-                        )}
-                    </div>
-                    <button onClick={handleNextMonth} className="p-2 hover:bg-white rounded-xl text-gray-600 transition-all shadow-sm hover:shadow-md">
-                        <ChevronRight size={20} />
-                    </button>
+                    {isMonthPickerOpen && (
+                        <MonthYearSelector 
+                            currentDate={currentDate} 
+                            onChange={(date) => { setCurrentDate(date); setIsMonthPickerOpen(false); }}
+                        />
+                    )}
                 </div>
-                {isEventView ? (
-                    <div className="px-4 py-1 text-xs font-medium text-gray-500">
-                        {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                    </div>
-                ) : (
-                    <button onClick={handleJumpToToday} className="px-4 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200">
-                        Today
-                    </button>
-                )}
+                <button onClick={handleNextMonth} className="p-2 hover:bg-white rounded-xl text-gray-600 transition-all shadow-sm hover:shadow-md">
+                    <ChevronRight size={20} />
+                </button>
             </div>
         ) : (
             <div />
@@ -629,6 +618,13 @@ export const App: React.FC = () => {
                         {isMenuOpen && (
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
                                 <button 
+                                    onClick={() => { handleJumpToToday(); setIsMenuOpen(false); }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    <CalendarIcon size={16} />
+                                    Today
+                                </button>
+                                <button 
                                     onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
                                     className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
                                 >
@@ -733,14 +729,14 @@ export const App: React.FC = () => {
         ) : (
             <>
                 <div className="w-full flex-1 flex flex-col overflow-auto" ref={scrollContainerRef}>
-                    <div className="min-w-[700px] flex flex-col h-full px-4 md:px-6 pb-8">
-                        <div className="grid grid-cols-7 mb-4 sticky top-0 z-20 bg-gray-50 py-3 -mx-4 px-4 md:-mx-6 md:px-6 shadow-sm border-b border-gray-200/50 backdrop-blur-sm bg-gray-50/90">
+                    <div className="min-w-[700px] flex flex-col h-full px-4 md:px-6 pb-4">
+                        <div className="grid grid-cols-7 mb-2 sticky top-0 z-20 bg-gray-50 py-1.5 -mx-4 px-4 md:-mx-6 md:px-6 shadow-sm border-b border-gray-200/50 backdrop-blur-sm bg-gray-50/90">
                             {WEEK_DAYS.map(day => (
-                                <div key={day} className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">{day}</div>
+                                <div key={day} className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{day}</div>
                             ))}
                         </div>
 
-                        <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-2 md:gap-4 min-h-[750px]">
+                        <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-1 md:gap-2 min-h-[500px]">
                             {gridData.map((cell, index) => {
                                 const isToday = isSameDay(cell.date, new Date());
                                 const dayEvents = approvedEvents.filter(e => isEventActiveOnDate(cell.date, e))
