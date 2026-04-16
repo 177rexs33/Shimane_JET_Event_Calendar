@@ -600,12 +600,12 @@ export const App: React.FC = () => {
                         )}
                     </div>
 
-                    <button onClick={() => { setSelectedDate(null); setSelectedEvent(null); setEventModalSource('calendar'); setIsEventModalOpen(true); }} className="flex items-center justify-center p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-100 hover:shadow-lg" title="New Event">
-                        <Plus size={20} />
-                    </button>
-
                     <button onClick={() => setIsSearchModalOpen(true)} className="flex items-center justify-center p-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md" title="Search Events">
                         <Search size={20} />
+                    </button>
+
+                    <button onClick={() => { setSelectedDate(null); setSelectedEvent(null); setEventModalSource('calendar'); setIsEventModalOpen(true); }} className="flex items-center justify-center p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-100 hover:shadow-lg" title="New Event">
+                        <Plus size={20} />
                     </button>
 
                     {isAdminSession && (
@@ -768,9 +768,14 @@ export const App: React.FC = () => {
                                         `}
                                     >
                                         <div className="flex justify-between items-start">
-                                            <span className={`text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? 'bg-red-600 text-white' : ''}`}>
-                                                {cell.date.getDate()}
-                                            </span>
+                                            <div className="relative w-5 h-5 shrink-0">
+                                                <span className={`absolute inset-0 text-xs font-medium flex items-center justify-center rounded-full transition-opacity md:group-hover:opacity-0 ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? 'bg-red-600 text-white' : ''}`}>
+                                                    {cell.date.getDate()}
+                                                </span>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDateClick(cell.date); }} className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity bg-blue-100 text-blue-600 rounded-full hidden md:flex items-center justify-center cursor-pointer">
+                                                    <Plus size={14} />
+                                                </button>
+                                            </div>
                                             {holidayName && (
                                                 <div className="flex flex-col items-end ml-1 flex-1 overflow-hidden">
                                                     <span className="text-[9px] font-semibold truncate w-full text-right leading-tight holiday-text">
@@ -785,8 +790,8 @@ export const App: React.FC = () => {
 
                                         <div className="flex-1 flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden custom-scrollbar mt-0.5">
                                             {dayEvents.length > 3 ? (
-                                                <div className="flex-1 flex flex-col justify-center min-h-0">
-                                                    <div className="grid grid-cols-2 gap-1">
+                                                <div className="flex-1 flex flex-col justify-center min-h-0 h-full">
+                                                    <div className="grid grid-cols-2 auto-rows-fr gap-1 h-full">
                                                         {Object.entries(
                                                             dayEvents.reduce((acc, event) => {
                                                                 acc[event.region] = (acc[event.region] || 0) + 1;
@@ -799,7 +804,7 @@ export const App: React.FC = () => {
                                                                     key={region}
                                                                     title={`${region}: ${count} events`}
                                                                     className={`
-                                                                        flex flex-col items-center justify-center py-1 px-0.5 rounded-[6px] border
+                                                                        flex flex-col items-center justify-center p-0.5 rounded-[6px] border w-full h-full min-h-0
                                                                         ${getRegionClasses(region as Region)}
                                                                     `}
                                                                 >
@@ -830,12 +835,6 @@ export const App: React.FC = () => {
                                                     </div>
                                                 ))
                                             )}
-                                        </div>
-                                        
-                                        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-                                            <button onClick={(e) => { e.stopPropagation(); handleDateClick(cell.date); }} className="bg-gray-100 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 cursor-pointer">
-                                                <Plus size={14} />
-                                            </button>
                                         </div>
                                     </div>
                                 );
