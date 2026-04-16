@@ -105,37 +105,36 @@ if (!getApps().length) {
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Set persistence but don't block auth listener
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("Error setting persistence:", error);
+});
+
 let isAuthenticating = false;
 
-setPersistence(auth, browserLocalPersistence)
-  .then(() => {
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const visitorRef = doc(db, 'visitors', user.uid);
-          await setDoc(visitorRef, {
-            lastVisit: serverTimestamp(),
-            visitCount: increment(1)
-          }, { merge: true });
-        } catch (err) {
-          console.error("Error tracking visitor:", err);
-        }
-      } else {
-        if (isAuthenticating) return;
-        isAuthenticating = true;
-        try {
-          await signInAnonymously(auth);
-        } catch (err) {
-          console.error("Error signing in anonymously:", err);
-        } finally {
-          isAuthenticating = false;
-        }
-      }
-    });
-  })
-  .catch((error) => {
-    console.error("Error setting persistence:", error);
-  });
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    try {
+      const visitorRef = doc(db, 'visitors', user.uid);
+      await setDoc(visitorRef, {
+        lastVisit: serverTimestamp(),
+        visitCount: increment(1)
+      }, { merge: true });
+    } catch (err) {
+      console.error("Error tracking visitor:", err);
+    }
+  } else {
+    if (isAuthenticating) return;
+    isAuthenticating = true;
+    try {
+      await signInAnonymously(auth);
+    } catch (err) {
+      console.error("Error signing in anonymously:", err);
+    } finally {
+      isAuthenticating = false;
+    }
+  }
+});
 
 export { signInWithEmailAndPassword, onAuthStateChanged, signOut };
 
