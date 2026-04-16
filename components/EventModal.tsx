@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from './Modal';
-import { CalendarEvent, Region, RecurrenceType, REGION_CITIES } from '../types';
+import { CalendarEvent, Region, RecurrenceType, REGION_CITIES, EventCategory } from '../types';
 import { toDateString, toTimeString } from '../utils/dateUtils';
 import { Clock, MapPin, AlignLeft, Type, Calendar as CalendarIcon, Globe, ChevronDown, Repeat, Check, AlertCircle, Trash2 } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';

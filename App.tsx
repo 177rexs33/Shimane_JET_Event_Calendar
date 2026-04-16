@@ -24,7 +24,6 @@ import { DayViewModal } from './components/DayViewModal';
 import { getEvents, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
 
 export const App: React.FC = () => {
-  const [isMobile, setIsMobile] = useState(false);
   const [isEventView, setIsEventView] = useState(window.innerWidth < 768);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -58,17 +57,6 @@ export const App: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-    
-    return () => window.removeEventListener('resize', checkIfMobile);
-  }, []);
 
   useEffect(() => {
     const updateScrollbarWidth = () => {
@@ -117,14 +105,13 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAuthReady) return;
     // Subscribe to Firebase updates from the 'events' collection only
     const unsubscribe = getEvents((fetchedEvents) => {
         setEvents(fetchedEvents);
     });
 
     return () => unsubscribe();
-  }, [isAuthReady]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
