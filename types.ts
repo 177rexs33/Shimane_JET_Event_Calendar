@@ -22,7 +22,7 @@ export interface CalendarEvent {
 export enum Region {
   IWAMI = 'Iwami (West)',
   IZUMO = 'Izumo (East)',
-  OKI = 'Oki',
+  OKI = 'Oki Island',
   OUTSIDE_SHIMANE = 'Outside Shimane'
 }
 
