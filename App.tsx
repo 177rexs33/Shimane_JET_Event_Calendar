@@ -21,6 +21,7 @@ import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { ContactModal } from './components/ContactModal';
 import { SearchModal } from './components/SearchModal';
 import { DayViewModal } from './components/DayViewModal';
+import { FilterDropdown } from './components/FilterDropdown';
 import { getEventsForMonth, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
 
 export const App: React.FC = () => {
@@ -56,7 +57,9 @@ export const App: React.FC = () => {
   
   const monthPickerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -141,13 +144,25 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (monthPickerRef.current && !monthPickerRef.current.contains(event.target as Node)) {
+      const targetNode = event.target as Node;
+      
+      if (monthPickerRef.current && !monthPickerRef.current.contains(targetNode)) {
         setIsMonthPickerOpen(false);
       }
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      
+      const isInsideAnyMenu = 
+        (menuRef.current && menuRef.current.contains(targetNode)) || 
+        (mobileMenuRef.current && mobileMenuRef.current.contains(targetNode));
+        
+      if (!isInsideAnyMenu) {
         setIsMenuOpen(false);
       }
-      if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
+      
+      const isInsideAnyFilter = 
+        (filterMenuRef.current && filterMenuRef.current.contains(targetNode)) || 
+        (filterDropdownRef.current && filterDropdownRef.current.contains(targetNode));
+        
+      if (!isInsideAnyFilter) {
         setIsFilterMenuOpen(false);
       }
     };
@@ -418,36 +433,156 @@ export const App: React.FC = () => {
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 text-gray-900 font-sans">
-      <div className="flex-none z-30 flex flex-col shadow-sm">
+      <div className="flex-none z-40 flex flex-col shadow-sm">
         <header 
-            className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-1.5 flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center gap-2"
+            className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-1.5 flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center gap-2 relative"
             style={{ paddingRight: `calc(1rem + ${scrollbarWidth}px)` }}
         >
-          <div className="flex items-center gap-2 justify-self-start min-w-0 w-full">
-            <a 
-                href="https://shimaneparesources.wordpress.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="block hover:opacity-80 transition-opacity cursor-pointer flex items-center shrink-0"
-                title="Visit Shimane PA Resources"
-            >
-                <img 
-                    src="https://github.com/user-attachments/assets/c39f0492-fddb-4772-9774-2ca0ae1d1f39" 
-                    alt="Shimane PA Logo" 
-                    className="h-8 w-auto object-contain"
-                    referrerPolicy="no-referrer"
-                />
-            </a>
-            <h1 
-                className="text-base font-bold tracking-tight text-gray-800 cursor-pointer truncate"
-                onClick={() => setView('calendar')}
-            >
-                Shimane JET Event Calendar
-            </h1>
+          <div className="flex items-center justify-between gap-2 justify-self-start min-w-0 w-full">
+            <div className="flex items-center gap-2 min-w-0">
+                <a 
+                    href="https://shimaneparesources.wordpress.com/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block hover:opacity-80 transition-opacity cursor-pointer flex items-center shrink-0"
+                    title="Visit Shimane PA Resources"
+                >
+                    <img 
+                        src="https://github.com/user-attachments/assets/c39f0492-fddb-4772-9774-2ca0ae1d1f39" 
+                        alt="Shimane PA Logo" 
+                        className="h-8 w-auto object-contain"
+                        referrerPolicy="no-referrer"
+                    />
+                </a>
+                <h1 
+                    className="text-base font-bold tracking-tight text-gray-800 cursor-pointer truncate"
+                    onClick={() => setView('calendar')}
+                >
+                    Shimane JET Event Calendar
+                </h1>
+            </div>
+
+            {/* Mobile Menu Button - positioned top right */}
+            <div className="md:hidden flex items-center gap-2">
+                {isAdminSession && view === 'calendar' && (
+                    <button 
+                        onClick={() => setView('admin')}
+                        className="p-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+                        title="Admin Dashboard"
+                    >
+                        <ShieldCheck size={20} />
+                    </button>
+                )}
+                <div className="relative" ref={mobileMenuRef}>
+                    <button 
+                        onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                        className={`flex items-center justify-center p-2 rounded-lg transition-all shadow-sm hover:shadow-md border ${
+                            isMenuOpen ? 'bg-gray-100 text-blue-600 border-gray-300' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        }`}
+                        title="Menu"
+                    >
+                        <Menu size={20} />
+                    </button>
+                    
+                    {isMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                            {view === 'calendar' && (
+                                <>
+                                    <button 
+                                        onClick={() => { setSelectedDate(null); setSelectedEvent(null); setEventModalSource('calendar'); setIsEventModalOpen(true); setIsMenuOpen(false); }}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+                                    >
+                                        <Plus size={18} />
+                                        New Event
+                                    </button>
+                                    <button 
+                                        onClick={() => { setIsSearchModalOpen(true); setIsMenuOpen(false); }}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <Search size={18} />
+                                        Search Events
+                                    </button>
+                                    <button 
+                                        onClick={() => { setIsFilterMenuOpen(!isFilterMenuOpen); setIsMenuOpen(false); }}
+                                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
+                                            selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilters.length > 0 
+                                                ? 'text-blue-700 bg-blue-50 hover:bg-blue-100' 
+                                                : 'text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <Filter size={18} />
+                                        Filters
+                                        {(selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilters.length > 0) && (
+                                            <span className="ml-auto bg-blue-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                                                {(selectedRegionFilter !== 'All' ? 1 : 0) + (selectedCityFilter !== 'Whole Region' ? 1 : 0) + selectedTypeFilters.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <div className="h-px bg-gray-100 my-1" />
+                                </>
+                            )}
+                            <button 
+                                onClick={() => { handleJumpToToday(); setIsMenuOpen(false); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                <CalendarIcon size={18} />
+                                Today
+                            </button>
+                            <button 
+                                onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                            >
+                                <Clock size={18} />
+                                Pending Requests
+                            </button>
+                            <button 
+                                onClick={() => { setIsEventView(!isEventView); setIsMenuOpen(false); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                <List size={18} />
+                                {isEventView ? 'Calendar View' : 'Event View'}
+                            </button>
+                            {isAdminSession ? (
+                                <button 
+                                    onClick={() => { handleLogout(); setIsMenuOpen(false); }} 
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                    <LogOut size={18} />
+                                    Logout
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={() => { handleAdminAccess(); setIsMenuOpen(false); }} 
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    <ShieldCheck size={18} />
+                                    Admin Login
+                                </button>
+                            )}
+                            <button 
+                                onClick={() => { setIsPrivacyPolicyModalOpen(true); setIsMenuOpen(false); }} 
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                <ShieldAlert size={18} />
+                                Privacy Policy
+                            </button>
+                            <button 
+                                onClick={() => { setIsContactModalOpen(true); setIsMenuOpen(false); }} 
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                            >
+                                <HelpCircle size={18} className="shrink-0" />
+                                <span>
+                                    Request Feature/<br />Broken Site?
+                                </span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
 
         {view === 'calendar' ? (
-            <div className="flex items-center gap-2 sm:gap-4 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-200/50 w-full sm:w-auto justify-self-center justify-center">
+            <div className="flex items-center gap-2 sm:gap-4 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-200/50 w-full sm:w-auto justify-self-center justify-center mb-1 md:mb-0">
                 <button onClick={handlePrevMonth} className="p-2 hover:bg-white rounded-xl text-gray-600 transition-all shadow-sm hover:shadow-md">
                     <ChevronLeft size={20} />
                 </button>
@@ -473,10 +608,10 @@ export const App: React.FC = () => {
             <div />
         )}
 
-        <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto justify-self-end min-w-0">
+        <div className="hidden md:flex items-center justify-end gap-3 w-full md:w-auto justify-self-end min-w-0">
             {view === 'calendar' ? (
                 <>
-                    {/* Filter Menu */}
+                    {/* Filter Dropdown */}
                     <div className="relative" ref={filterMenuRef}>
                         <button 
                             onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
@@ -495,111 +630,6 @@ export const App: React.FC = () => {
                                 </span>
                             )}
                         </button>
-
-                        {isFilterMenuOpen && (
-                            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 p-4 z-50 animate-in fade-in slide-in-from-top-2">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Region</label>
-                                        <select
-                                            value={selectedRegionFilter}
-                                            onChange={(e) => {
-                                                setSelectedRegionFilter(e.target.value as Region | 'All');
-                                                setSelectedCityFilter('Whole Region');
-                                            }}
-                                            className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
-                                        >
-                                            <option value="All">All Regions</option>
-                                            {Object.values(Region).map((r) => (
-                                                <option key={r} value={r}>{r}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {selectedRegionFilter !== 'All' && selectedRegionFilter !== Region.OUTSIDE_SHIMANE && (
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">City</label>
-                                            <select
-                                                value={selectedCityFilter}
-                                                onChange={(e) => setSelectedCityFilter(e.target.value)}
-                                                className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
-                                            >
-                                                {REGION_CITIES[selectedRegionFilter as Region].filter(city => city !== 'N/A').map((city) => (
-                                                    <option key={city} value={city}>{city}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Event Category</label>
-                                        {selectedTypeFilters.length > 0 && (
-                                            <div className="flex flex-wrap gap-1.5 mb-2">
-                                                {selectedTypeFilters.map(filter => (
-                                                    <span key={filter} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">
-                                                        {filter}
-                                                        <button
-                                                            onClick={() => setSelectedTypeFilters(prev => prev.filter(f => f !== filter))}
-                                                            className="text-blue-600 hover:text-blue-900 focus:outline-none"
-                                                        >
-                                                            &times;
-                                                        </button>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-                                        <select
-                                            value=""
-                                            onChange={(e) => {
-                                                const val = e.target.value as EventCategory;
-                                                if (val && !selectedTypeFilters.includes(val)) {
-                                                    setSelectedTypeFilters(prev => [...prev, val]);
-                                                }
-                                            }}
-                                            className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
-                                        >
-                                            <option value="" disabled hidden>Select Category</option>
-                                            {!selectedTypeFilters.includes('JET') && <option value="JET">JET</option>}
-                                            {!selectedTypeFilters.includes('AJET') && <option value="AJET">AJET</option>}
-                                            {!selectedTypeFilters.includes('Local Event') && <option value="Local Event">Local Event</option>}
-                                            {!selectedTypeFilters.includes('Festival') && <option value="Festival">Festival</option>}
-                                            {!selectedTypeFilters.includes('Sports') && <option value="Sports">Sports</option>}
-                                            {!selectedTypeFilters.includes('Music') && <option value="Music">Music</option>}
-                                            {!selectedTypeFilters.includes('Cultural Exchange') && <option value="Cultural Exchange">Cultural Exchange</option>}
-                                            {!selectedTypeFilters.includes('Other') && <option value="Other">Other</option>}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">National Holidays</label>
-                                        <div className="flex items-center space-x-2">
-                                            <input
-                                                type="checkbox"
-                                                id="showNationalHolidays"
-                                                checked={showNationalHolidays}
-                                                onChange={(e) => setShowNationalHolidays(e.target.checked)}
-                                                className="w-4 h-4 text-blue-600 bg-gray-50 border-gray-300 rounded focus:ring-blue-500"
-                                            />
-                                            <label htmlFor="showNationalHolidays" className="text-sm text-gray-700 cursor-pointer">
-                                                Show National Holidays
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {(selectedRegionFilter !== 'All' || selectedCityFilter !== 'Whole Region' || selectedTypeFilters.length > 0 || !showNationalHolidays) && (
-                                        <div className="pt-2 border-t border-gray-100">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedRegionFilter('All');
-                                                    setSelectedCityFilter('Whole Region');
-                                                    setSelectedTypeFilters([]);
-                                                    setShowNationalHolidays(true);
-                                                }}
-                                                className="w-full py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                Reset Filters
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     <button onClick={() => setIsSearchModalOpen(true)} className="flex items-center justify-center p-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md" title="Search Events">
@@ -622,7 +652,9 @@ export const App: React.FC = () => {
                     <div className="relative" ref={menuRef}>
                         <button 
                             onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                            className="flex items-center justify-center p-2 text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
+                            className={`flex items-center justify-center p-2 rounded-lg transition-all shadow-sm hover:shadow-md border ${
+                                isMenuOpen ? 'bg-gray-100 text-blue-600 border-gray-300' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                            }`}
                             title="Menu"
                         >
                             <Menu size={20} />
@@ -706,7 +738,25 @@ export const App: React.FC = () => {
                     </button>
                 </div>
             )}
-          </div>
+        </div>
+
+        {/* Global Filter Dropdown - accessible by both mobile and desktop menus */}
+        {view === 'calendar' && (
+            <FilterDropdown 
+                isOpen={isFilterMenuOpen}
+                onClose={() => setIsFilterMenuOpen(false)}
+                selectedRegionFilter={selectedRegionFilter}
+                setSelectedRegionFilter={setSelectedRegionFilter}
+                selectedCityFilter={selectedCityFilter}
+                setSelectedCityFilter={setSelectedCityFilter}
+                selectedTypeFilters={selectedTypeFilters}
+                setSelectedTypeFilters={setSelectedTypeFilters}
+                showNationalHolidays={showNationalHolidays}
+                setShowNationalHolidays={setShowNationalHolidays}
+                className="top-full right-4 mt-1"
+                containerRef={filterDropdownRef}
+            />
+        )}
         </header>
         {isAdminSession && view === 'calendar' && (
             <div 
