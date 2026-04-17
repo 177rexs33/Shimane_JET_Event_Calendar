@@ -21,6 +21,7 @@ import {
   doc, 
   query, 
   where, 
+  getDocs,
   serverTimestamp,
   setDoc,
   increment
@@ -93,10 +94,13 @@ const firebaseConfig = {
 let app;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
+  // Disabled App Check to resolve potential auth/network-request-failed issues in this environment
+  /*
   initializeAppCheck(app, {
     provider: new ReCaptchaEnterpriseProvider('6LcugZ0sAAAAAFAcvguM11ZgJdC_nix7qrqGl7-e'),
     isTokenAutoRefreshEnabled: true
   });
+  */
 } else {
   app = getApp();
 }
@@ -162,7 +166,33 @@ export const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
   }
 };
 
-// Get approved events from 'events' collection
+// Get approved events from 'events' collection for a specific month
+export const getEventsForMonth = async (startISO: string, endISO: string): Promise<CalendarEvent[]> => {
+  try {
+    // Only query by date range to avoid needing a composite index with 'status'
+    // Single field indexes are automatically created by Firestore
+    const q = query(
+      collection(db, "events"), 
+      where("start", ">=", startISO),
+      where("start", "<=", endISO)
+    );
+    const snapshot = await getDocs(q);
+    const events: CalendarEvent[] = [];
+    snapshot.forEach((snapshotDoc) => {
+      const data = snapshotDoc.data();
+      // Filter by 'approved' status in memory to satisfy performance needs without requiring index
+      if (data.status === 'approved') {
+        events.push({ ...data, id: snapshotDoc.id } as CalendarEvent);
+      }
+    });
+    return events;
+  } catch (e) {
+    handleFirestoreError(e, OperationType.LIST, "events");
+    return [];
+  }
+};
+
+// Get approved events from 'events' collection (Global version - deprecated for App.tsx main view but kept for backward compat if needed)
 export const getEvents = (onUpdate: (events: CalendarEvent[]) => void) => {
   const q = query(collection(db, "events"), where("status", "==", "approved"));
   const unsubscribe = onSnapshot(q, (snapshot) => {

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle, List, Calendar as CalendarIcon, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle, List, Calendar as CalendarIcon, Search, Loader2 } from 'lucide-react';
 import { CalendarEvent, Region, REGION_CITIES, EventCategory } from './types';
 import { 
     generateCalendarGrid, 
@@ -21,7 +21,7 @@ import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { ContactModal } from './components/ContactModal';
 import { SearchModal } from './components/SearchModal';
 import { DayViewModal } from './components/DayViewModal';
-import { getEvents, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
+import { getEventsForMonth, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
 
 export const App: React.FC = () => {
   const [isEventView, setIsEventView] = useState(window.innerWidth < 768);
@@ -51,6 +51,7 @@ export const App: React.FC = () => {
   const [isAdminSession, setIsAdminSession] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [holidays, setHolidays] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
   
   const monthPickerRef = useRef<HTMLDivElement>(null);
@@ -82,18 +83,11 @@ export const App: React.FC = () => {
   }, [view, currentDate]);
 
   useEffect(() => {
-    fetch('https://holidays-jp.github.io/api/v1/date.json')
-      .then(res => res.json())
-      .then(data => setHolidays(data))
-      .catch(err => console.error('Failed to fetch holidays:', err));
-  }, []);
-
-  useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       const isIpUser = user?.email?.endsWith('@anonymous-ip.local');
       const isAdmin = !!user && !user.isAnonymous && !isIpUser;
 
-      setIsAuthReady(!!user);
+      setIsAuthReady(true); // Always ready once the listener fires
       setIsAdminSession(isAdmin);
 
       if (!isAdmin) {
@@ -106,13 +100,44 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthReady) return;
-    // Subscribe to Firebase updates from the 'events' collection only
-    const unsubscribe = getEvents((fetchedEvents) => {
-        setEvents(fetchedEvents);
-    });
 
-    return () => unsubscribe();
-  }, [isAuthReady]);
+    const loadCalendarData = async () => {
+      setIsLoading(true);
+      
+      // Calculate the start and end of the visible calendar grid
+      const grid = generateCalendarGrid(currentDate);
+      // To catch events that might start/end exactly on the edges, use 00:00 and 23:59
+      const gridStart = new Date(grid[0].date);
+      gridStart.setHours(0, 0, 0, 0);
+      const gridEnd = new Date(grid[grid.length - 1].date);
+      gridEnd.setHours(23, 59, 59, 999);
+
+      const startISO = gridStart.toISOString();
+      const endISO = gridEnd.toISOString();
+
+      try {
+        // Parallel fetching of holidays and Firestore events
+        const [holidayResponse, eventData] = await Promise.all([
+          fetch('https://holidays-jp.github.io/api/v1/date.json'),
+          getEventsForMonth(startISO, endISO)
+        ]);
+        
+        if (!holidayResponse.ok) throw new Error('Failed to fetch holidays');
+        const holidayData = await holidayResponse.json();
+        
+        // Single update of data states conceptually
+        // Re-rendering will occur after this block
+        setHolidays(holidayData);
+        setEvents(eventData);
+      } catch (error) {
+        console.error("Error loading calendar data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCalendarData();
+  }, [currentDate, isAuthReady]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -706,7 +731,12 @@ export const App: React.FC = () => {
       </div>
 
       <main className="flex-1 overflow-hidden flex flex-col relative">
-        {view === 'admin' && isAdminSession ? (
+        {isLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-500 gap-4">
+                <Loader2 size={48} className="animate-spin text-blue-500" />
+                <p className="text-lg font-medium">Loading calendar...</p>
+            </div>
+        ) : view === 'admin' && isAdminSession ? (
             <div className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden"><AdminDashboard /></div>
         ) : view === 'admin' ? (
              <div className="flex items-center justify-center h-full p-4 md:p-6">
