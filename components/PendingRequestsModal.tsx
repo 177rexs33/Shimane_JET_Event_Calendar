@@ -74,13 +74,13 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
             </span>
           )}
         </div>
-        <h4 className="font-semibold text-gray-800 break-all whitespace-normal w-full">{event.title}</h4>
+        <h4 className="font-semibold text-gray-800 break-words whitespace-normal w-full">{event.title}</h4>
       </div>
       
       <div className="space-y-2 text-sm text-gray-600 min-w-0 w-full">
         <div className="flex items-start gap-2 min-w-0">
           <CalendarIcon size={14} className="text-gray-400 mt-0.5 shrink-0" />
-          <span className="break-all whitespace-normal min-w-0 flex-1">
+          <span className="break-words whitespace-normal min-w-0 flex-1">
             {new Date(event.start).toLocaleDateString()}
             {!event.isAllDay && ` • ${formatTime(event.start)} - ${formatTime(event.end)}`}
             {event.isAllDay && ' • All Day'}
@@ -90,7 +90,7 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
 
       {event.description && (
         <div className="mt-3 pt-3 border-t border-gray-100 min-w-0 w-full">
-          <p className="text-sm text-gray-600 line-clamp-3 break-all whitespace-normal">{event.description}</p>
+          <p className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal">{event.description}</p>
         </div>
       )}
     </div>

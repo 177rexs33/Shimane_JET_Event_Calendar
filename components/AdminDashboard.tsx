@@ -356,9 +356,9 @@ export const AdminDashboard: React.FC = () => {
                                         </div>
                                         
                                         <div className="min-w-0 w-full">
-                                            <h3 className="text-lg font-bold text-gray-900 leading-tight break-all whitespace-normal">{event.title}</h3>
+                                            <h3 className="text-lg font-bold text-gray-900 leading-tight break-words whitespace-normal">{event.title}</h3>
                                             {event.description && (
-                                                <p className="text-gray-600 text-sm mt-1 line-clamp-3 break-all whitespace-normal">{event.description}</p>
+                                                <p className="text-gray-600 text-sm mt-1 line-clamp-3 break-words whitespace-normal">{event.description}</p>
                                             )}
                                         </div>
 
@@ -477,17 +477,17 @@ export const AdminDashboard: React.FC = () => {
                                             {changes.title ? (
                                                 <div className="space-y-1 min-w-0">
                                                     <div className="flex items-start gap-2 min-w-0">
-                                                        <h3 className="text-lg font-bold text-gray-900 leading-tight bg-green-50 px-1 rounded -ml-1 border border-green-100 break-all whitespace-normal">
+                                                        <h3 className="text-lg font-bold text-gray-900 leading-tight bg-green-50 px-1 rounded -ml-1 border border-green-100 break-words whitespace-normal">
                                                             {event.title}
                                                         </h3>
                                                     </div>
                                                     <p className="text-sm text-red-400 flex items-start flex-col sm:flex-row sm:items-center gap-1 min-w-0">
                                                         <span className="text-xs font-medium uppercase text-red-300 mr-1 shrink-0">Was:</span>
-                                                        <span className="break-all whitespace-normal">{original?.title}</span>
+                                                        <span className="break-words whitespace-normal">{original?.title}</span>
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <h3 className="text-lg font-bold text-gray-900 leading-tight break-all whitespace-normal">{event.title}</h3>
+                                                <h3 className="text-lg font-bold text-gray-900 leading-tight break-words whitespace-normal">{event.title}</h3>
                                             )}
                                         </div>
 
@@ -501,14 +501,14 @@ export const AdminDashboard: React.FC = () => {
                                                 </div>
                                                 {changes.description ? (
                                                     <div className="space-y-2 text-sm">
-                                                        <div className="text-gray-900 break-all whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</div>
+                                                        <div className="text-gray-900 break-words whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</div>
                                                         <div className="pt-2 border-t border-amber-100 text-red-400 text-xs">
                                                             <span className="font-semibold uppercase text-red-300 mr-1">Previous:</span>
-                                                            <span className="opacity-70 break-all whitespace-normal">{original?.description || 'No description'}</span>
+                                                            <span className="opacity-70 break-words whitespace-normal">{original?.description || 'No description'}</span>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <p className="text-sm text-gray-600 line-clamp-3 break-all whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</p>
+                                                    <p className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</p>
                                                 )}
                                             </div>
 
@@ -610,7 +610,7 @@ export const AdminDashboard: React.FC = () => {
 
                                         {/* Title */}
                                         <div className="min-w-0">
-                                            <h3 className="text-lg font-bold text-gray-900 leading-tight break-all whitespace-normal">{event.title}</h3>
+                                            <h3 className="text-lg font-bold text-gray-900 leading-tight break-words whitespace-normal">{event.title}</h3>
                                         </div>
 
                                         <div className="space-y-3">
@@ -620,7 +620,7 @@ export const AdminDashboard: React.FC = () => {
                                                     <FileText size={14} className="text-gray-400" />
                                                     <span className="text-xs font-semibold text-gray-500 uppercase">Description</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600 line-clamp-3 break-all whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</p>
+                                                <p className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</p>
                                             </div>
 
                                             {/* Time */}
@@ -698,8 +698,8 @@ export const AdminDashboard: React.FC = () => {
                                                 </span>
                                             )}
                                         </div>
-                                        <h3 className="font-semibold text-gray-700 break-all whitespace-normal">{event.title}</h3>
-                                        <p className="text-xs text-gray-500 break-all whitespace-normal">
+                                        <h3 className="font-semibold text-gray-700 break-words whitespace-normal">{event.title}</h3>
+                                        <p className="text-xs text-gray-500 break-words whitespace-normal">
                                             {formatFriendlyDate(event.start)} • {event.region}
                                         </p>
                                     </div>
@@ -790,9 +790,9 @@ export const AdminDashboard: React.FC = () => {
                                         </div>
                                         
                                         <div className="min-w-0 w-full">
-                                            <h3 className="text-lg font-bold text-gray-900 leading-tight break-all whitespace-normal">{event.title}</h3>
+                                            <h3 className="text-lg font-bold text-gray-900 leading-tight break-words whitespace-normal">{event.title}</h3>
                                             {event.description && (
-                                                <p className="text-gray-600 text-sm mt-1 line-clamp-3 break-all whitespace-normal">{event.description}</p>
+                                                <p className="text-gray-600 text-sm mt-1 line-clamp-3 break-words whitespace-normal">{event.description}</p>
                                             )}
                                         </div>
 
