@@ -58,9 +58,8 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
 
   const renderEventCard = (event: CalendarEvent) => (
     <div key={event.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-2 gap-4">
-        <h4 className="font-semibold text-gray-800 truncate max-w-full min-w-0">{event.title}</h4>
-        <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
+      <div className="flex flex-col items-start mb-2 gap-3 w-full min-w-0">
+        <div className="flex flex-wrap gap-1.5 w-full">
           {event.types && event.types.map(type => (
             <span key={type} className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
               {type}
@@ -75,12 +74,13 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
             </span>
           )}
         </div>
+        <h4 className="font-semibold text-gray-800 break-all whitespace-normal w-full">{event.title}</h4>
       </div>
       
-      <div className="space-y-2 text-sm text-gray-600">
-        <div className="flex items-center gap-2">
-          <CalendarIcon size={14} className="text-gray-400" />
-          <span>
+      <div className="space-y-2 text-sm text-gray-600 min-w-0 w-full">
+        <div className="flex items-start gap-2 min-w-0">
+          <CalendarIcon size={14} className="text-gray-400 mt-0.5 shrink-0" />
+          <span className="break-all whitespace-normal min-w-0 flex-1">
             {new Date(event.start).toLocaleDateString()}
             {!event.isAllDay && ` • ${formatTime(event.start)} - ${formatTime(event.end)}`}
             {event.isAllDay && ' • All Day'}
@@ -89,8 +89,8 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
       </div>
 
       {event.description && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
+        <div className="mt-3 pt-3 border-t border-gray-100 min-w-0 w-full">
+          <p className="text-sm text-gray-600 line-clamp-3 break-all whitespace-normal">{event.description}</p>
         </div>
       )}
     </div>
@@ -98,8 +98,8 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Pending Requests">
-      <div className="flex flex-col h-full">
-        <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4 shrink-0">
+      <div className="flex flex-col h-full min-w-0 w-full">
+        <div className="flex flex-col sm:flex-row gap-2 p-1 bg-gray-100 rounded-lg mb-4 shrink-0 w-full overflow-hidden">
           <button
             onClick={() => setActiveTab('pending')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all ${

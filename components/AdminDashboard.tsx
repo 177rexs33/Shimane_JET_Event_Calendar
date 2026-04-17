@@ -162,13 +162,13 @@ export const AdminDashboard: React.FC = () => {
   const renderTime = (e: CalendarEvent | undefined) => {
       if (!e) return null;
       return (
-        <div className="flex flex-wrap gap-2 items-center">
-            <span className="whitespace-nowrap">
+        <div className="flex flex-wrap gap-1 items-center flex-1 min-w-0">
+            <span className="whitespace-normal break-words">
                 {formatFriendlyDate(e.start)}
                 {!e.isAllDay && <span className="ml-1.5 font-medium">{formatTime(e.start)}</span>}
             </span>
-            <ArrowRight size={12} className="text-gray-400" />
-            <span className="whitespace-nowrap">
+            <ArrowRight size={12} className="text-gray-400 shrink-0" />
+            <span className="whitespace-normal break-words">
                 {formatFriendlyDate(e.end)}
                 {!e.isAllDay && <span className="ml-1.5 font-medium">{formatTime(e.end)}</span>}
             </span>
@@ -355,23 +355,23 @@ export const AdminDashboard: React.FC = () => {
                                             )}
                                         </div>
                                         
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-900 leading-tight truncate max-w-full">{event.title}</h3>
+                                        <div className="min-w-0 w-full">
+                                            <h3 className="text-lg font-bold text-gray-900 leading-tight break-all whitespace-normal">{event.title}</h3>
                                             {event.description && (
-                                                <p className="text-gray-600 text-sm mt-1 line-clamp-2">{event.description}</p>
+                                                <p className="text-gray-600 text-sm mt-1 line-clamp-3 break-all whitespace-normal">{event.description}</p>
                                             )}
                                         </div>
 
-                                        <div className="flex flex-col gap-1.5 mt-1">
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <CalendarIcon size={14} className="shrink-0 text-gray-400" />
-                                                <div className="flex flex-wrap gap-2 items-center">
-                                                    <span className="whitespace-nowrap">
+                                        <div className="flex flex-col gap-1.5 mt-1 min-w-0">
+                                            <div className="flex items-start gap-2 text-sm text-gray-600 min-w-0">
+                                                <CalendarIcon size={14} className="shrink-0 text-gray-400 mt-0.5" />
+                                                <div className="flex flex-wrap gap-1 items-center flex-1 min-w-0">
+                                                    <span className="whitespace-normal break-words">
                                                         {formatFriendlyDate(event.start)}
                                                         {!event.isAllDay && <span className="ml-1.5 font-medium text-gray-900">{formatTime(event.start)}</span>}
                                                     </span>
-                                                    <ArrowRight size={12} className="text-gray-400" />
-                                                    <span className="whitespace-nowrap">
+                                                    <ArrowRight size={12} className="text-gray-400 shrink-0" />
+                                                    <span className="whitespace-normal break-words">
                                                         {formatFriendlyDate(event.end)}
                                                         {!event.isAllDay && <span className="ml-1.5 font-medium text-gray-900">{formatTime(event.end)}</span>}
                                                     </span>
@@ -477,17 +477,17 @@ export const AdminDashboard: React.FC = () => {
                                             {changes.title ? (
                                                 <div className="space-y-1 min-w-0">
                                                     <div className="flex items-start gap-2 min-w-0">
-                                                        <h3 className="text-lg font-bold text-gray-900 leading-tight bg-green-50 px-1 rounded -ml-1 border border-green-100 truncate max-w-full">
+                                                        <h3 className="text-lg font-bold text-gray-900 leading-tight bg-green-50 px-1 rounded -ml-1 border border-green-100 break-all whitespace-normal">
                                                             {event.title}
                                                         </h3>
                                                     </div>
-                                                    <p className="text-sm text-red-400 flex items-center gap-1 min-w-0">
+                                                    <p className="text-sm text-red-400 flex items-start flex-col sm:flex-row sm:items-center gap-1 min-w-0">
                                                         <span className="text-xs font-medium uppercase text-red-300 mr-1 shrink-0">Was:</span>
-                                                        <span className="truncate">{original?.title}</span>
+                                                        <span className="break-all whitespace-normal">{original?.title}</span>
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <h3 className="text-lg font-bold text-gray-900 leading-tight truncate max-w-full">{event.title}</h3>
+                                                <h3 className="text-lg font-bold text-gray-900 leading-tight break-all whitespace-normal">{event.title}</h3>
                                             )}
                                         </div>
 
@@ -501,14 +501,14 @@ export const AdminDashboard: React.FC = () => {
                                                 </div>
                                                 {changes.description ? (
                                                     <div className="space-y-2 text-sm">
-                                                        <div className="text-gray-900">{event.description || <span className="italic text-gray-400">No description</span>}</div>
+                                                        <div className="text-gray-900 break-all whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</div>
                                                         <div className="pt-2 border-t border-amber-100 text-red-400 text-xs">
                                                             <span className="font-semibold uppercase text-red-300 mr-1">Previous:</span>
-                                                            <span className="opacity-70">{original?.description || 'No description'}</span>
+                                                            <span className="opacity-70 break-all whitespace-normal">{original?.description || 'No description'}</span>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <p className="text-sm text-gray-600">{event.description || <span className="italic text-gray-400">No description</span>}</p>
+                                                    <p className="text-sm text-gray-600 line-clamp-3 break-all whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</p>
                                                 )}
                                             </div>
 
@@ -610,7 +610,7 @@ export const AdminDashboard: React.FC = () => {
 
                                         {/* Title */}
                                         <div className="min-w-0">
-                                            <h3 className="text-lg font-bold text-gray-900 leading-tight truncate max-w-full">{event.title}</h3>
+                                            <h3 className="text-lg font-bold text-gray-900 leading-tight break-all whitespace-normal">{event.title}</h3>
                                         </div>
 
                                         <div className="space-y-3">
@@ -620,7 +620,7 @@ export const AdminDashboard: React.FC = () => {
                                                     <FileText size={14} className="text-gray-400" />
                                                     <span className="text-xs font-semibold text-gray-500 uppercase">Description</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600">{event.description || <span className="italic text-gray-400">No description</span>}</p>
+                                                <p className="text-sm text-gray-600 line-clamp-3 break-all whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</p>
                                             </div>
 
                                             {/* Time */}
@@ -698,8 +698,8 @@ export const AdminDashboard: React.FC = () => {
                                                 </span>
                                             )}
                                         </div>
-                                        <h3 className="font-semibold text-gray-700 truncate max-w-full">{event.title}</h3>
-                                        <p className="text-xs text-gray-500 truncate">
+                                        <h3 className="font-semibold text-gray-700 break-all whitespace-normal">{event.title}</h3>
+                                        <p className="text-xs text-gray-500 break-all whitespace-normal">
                                             {formatFriendlyDate(event.start)} • {event.region}
                                         </p>
                                     </div>
