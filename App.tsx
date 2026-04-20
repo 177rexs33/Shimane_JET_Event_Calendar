@@ -464,13 +464,13 @@ export const App: React.FC = () => {
 
             {/* Mobile Menu Button - positioned top right */}
             <div className="md:hidden flex items-center gap-2">
-                {isAdminSession && view === 'calendar' && (
+                {isAdminSession && (
                     <button 
-                        onClick={() => setView('admin')}
+                        onClick={() => setView(view === 'admin' ? 'calendar' : 'admin')}
                         className="p-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
-                        title="Admin Dashboard"
+                        title={view === 'admin' ? (isEventView ? "Back to Event View" : "Back to Calendar") : "Admin Dashboard"}
                     >
-                        <ShieldCheck size={20} />
+                        {view === 'admin' ? (isEventView ? <List size={20} /> : <CalendarIcon size={20} />) : <ShieldCheck size={20} />}
                     </button>
                 )}
                 <div className="relative" ref={mobileMenuRef}>
@@ -609,7 +609,7 @@ export const App: React.FC = () => {
         )}
 
         <div className="hidden md:flex items-center justify-end gap-3 w-full md:w-auto justify-self-end min-w-0">
-            {view === 'calendar' ? (
+            {view === 'calendar' && (
                 <>
                     {/* Filter Dropdown */}
                     <div className="relative" ref={filterMenuRef}>
@@ -639,105 +639,88 @@ export const App: React.FC = () => {
                     <button onClick={() => { setSelectedDate(null); setSelectedEvent(null); setEventModalSource('calendar'); setIsEventModalOpen(true); }} className="flex items-center justify-center p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-100 hover:shadow-lg" title="New Event">
                         <Plus size={20} />
                     </button>
-
-                    {isAdminSession && (
-                        <button 
-                            onClick={() => setView('admin')}
-                            className="flex items-center justify-center p-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
-                            title="Admin Dashboard"
-                        >
-                            <ShieldCheck size={20} />
-                        </button>
-                    )}
-                    <div className="relative" ref={menuRef}>
-                        <button 
-                            onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                            className={`flex items-center justify-center p-2 rounded-lg transition-all shadow-sm hover:shadow-md border ${
-                                isMenuOpen ? 'bg-gray-100 text-blue-600 border-gray-300' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                            }`}
-                            title="Menu"
-                        >
-                            <Menu size={20} />
-                        </button>
-                        
-                        {isMenuOpen && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                                <button 
-                                    onClick={() => { handleJumpToToday(); setIsMenuOpen(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                    <CalendarIcon size={16} />
-                                    Today
-                                </button>
-                                <button 
-                                    onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
-                                >
-                                    <Clock size={16} />
-                                    Pending Requests
-                                </button>
-                                <button 
-                                    onClick={() => { setIsEventView(!isEventView); setIsMenuOpen(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                    <List size={16} />
-                                    {isEventView ? 'Calendar View' : 'Event View'}
-                                </button>
-                                {isAdminSession ? (
-                                    <button 
-                                        onClick={() => { handleLogout(); setIsMenuOpen(false); }} 
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                        <LogOut size={16} />
-                                        Logout
-                                    </button>
-                                ) : (
-                                    <button 
-                                        onClick={() => { handleAdminAccess(); setIsMenuOpen(false); }} 
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                    >
-                                        <ShieldCheck size={16} />
-                                        Admin Login
-                                    </button>
-                                )}
-                                <button 
-                                    onClick={() => { setIsPrivacyPolicyModalOpen(true); setIsMenuOpen(false); }} 
-                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                    <ShieldAlert size={16} />
-                                    Privacy Policy
-                                </button>
-                                <button 
-                                    onClick={() => { setIsContactModalOpen(true); setIsMenuOpen(false); }} 
-                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                                >
-                                    <HelpCircle size={16} className="shrink-0" />
-                                    <span>
-                                        Request Feature/<br />Broken Site?
-                                    </span>
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 </>
-            ) : (
-                <div className="flex items-center gap-2">
-                    <button 
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                        <LogOut size={18} />
-                        <span className="hidden sm:inline">Log Out</span>
-                    </button>
-                    <button 
-                        onClick={() => setView('calendar')} 
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 bg-white"
-                    >
-                        <LayoutDashboard size={18} />
-                        Back to Calendar
-                    </button>
-                </div>
             )}
+
+            {isAdminSession && (
+                <button 
+                    onClick={() => setView(view === 'admin' ? 'calendar' : 'admin')}
+                    className="flex items-center justify-center p-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
+                    title={view === 'admin' ? (isEventView ? "Back to Event View" : "Back to Calendar") : "Admin Dashboard"}
+                >
+                    {view === 'admin' ? (isEventView ? <List size={20} /> : <CalendarIcon size={20} />) : <ShieldCheck size={20} />}
+                </button>
+            )}
+            <div className="relative" ref={menuRef}>
+                <button 
+                    onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                    className={`flex items-center justify-center p-2 rounded-lg transition-all shadow-sm hover:shadow-md border ${
+                        isMenuOpen ? 'bg-gray-100 text-blue-600 border-gray-300' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                    title="Menu"
+                >
+                    <Menu size={20} />
+                </button>
+                
+                {isMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                        <button 
+                            onClick={() => { handleJumpToToday(); setIsMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            <CalendarIcon size={16} />
+                            Today
+                        </button>
+                        <button 
+                            onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                        >
+                            <Clock size={16} />
+                            Pending Requests
+                        </button>
+                        <button 
+                            onClick={() => { setIsEventView(!isEventView); setIsMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            <List size={16} />
+                            {isEventView ? 'Calendar View' : 'Event View'}
+                        </button>
+                        {isAdminSession ? (
+                            <button 
+                                onClick={() => { handleLogout(); setIsMenuOpen(false); }} 
+                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                                <LogOut size={16} />
+                                Logout
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={() => { handleAdminAccess(); setIsMenuOpen(false); }} 
+                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                <ShieldCheck size={16} />
+                                Admin Login
+                            </button>
+                        )}
+                        <button 
+                            onClick={() => { setIsPrivacyPolicyModalOpen(true); setIsMenuOpen(false); }} 
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            <ShieldAlert size={16} />
+                            Privacy Policy
+                        </button>
+                        <button 
+                            onClick={() => { setIsContactModalOpen(true); setIsMenuOpen(false); }} 
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                        >
+                            <HelpCircle size={16} className="shrink-0" />
+                            <span>
+                                Request Feature/<br />Broken Site?
+                            </span>
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
 
         {/* Global Filter Dropdown - accessible by both mobile and desktop menus */}
