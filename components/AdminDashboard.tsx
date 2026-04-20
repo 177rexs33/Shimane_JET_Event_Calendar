@@ -187,132 +187,137 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-full">
       {/* Analytics Overview */}
-      <div className="mx-4 md:mx-6 mt-4 md:mt-6 flex flex-wrap items-center justify-center gap-4">
+      <div className="mx-4 md:mx-6 mt-4 md:mt-6 hidden md:flex flex-wrap items-center justify-center gap-2 md:gap-4">
         {/* Visitor Count */}
-        <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit">
-          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-            <Users size={20} />
+        <div className="flex items-center gap-2 md:gap-3 text-gray-600 bg-white px-2.5 md:px-4 py-1.5 md:py-3 rounded-lg md:rounded-xl border border-gray-200 shadow-sm w-fit">
+          <div className="p-1.5 md:p-2 bg-blue-50 text-blue-600 rounded-md md:rounded-lg">
+            <Users className="w-3.5 h-3.5 md:w-5 md:h-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Unique Visitors</span>
-            <span className="text-lg font-bold text-gray-900 leading-none mt-0.5">{visitorCount.toLocaleString()}</span>
+            <span className="text-[9px] md:text-xs font-semibold uppercase tracking-wider text-gray-500 leading-tight">Unique Visitors</span>
+            <span className="text-xs md:text-lg font-bold text-gray-900 leading-none mt-0.5">{visitorCount.toLocaleString()}</span>
           </div>
         </div>
 
         {/* Current Date */}
-        <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit">
-          <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-            <CalendarIcon size={20} />
+        <div className="flex items-center gap-2 md:gap-3 text-gray-600 bg-white px-2.5 md:px-4 py-1.5 md:py-3 rounded-lg md:rounded-xl border border-gray-200 shadow-sm w-fit">
+          <div className="p-1.5 md:p-2 bg-emerald-50 text-emerald-600 rounded-md md:rounded-lg">
+            <CalendarIcon className="w-3.5 h-3.5 md:w-5 md:h-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Current Date</span>
-            <span className="text-lg font-bold text-gray-900 leading-none mt-0.5">
+            <span className="text-[9px] md:text-xs font-semibold uppercase tracking-wider text-gray-500 leading-tight">Current Date</span>
+            <span className="text-xs md:text-lg font-bold text-gray-900 leading-none mt-0.5">
               {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
         </div>
 
         {/* Placeholder 1 */}
-        <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit opacity-70">
-          <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
-            <Activity size={20} />
+        <div className="flex items-center gap-2 md:gap-3 text-gray-600 bg-white px-2.5 md:px-4 py-1.5 md:py-3 rounded-lg md:rounded-xl border border-gray-200 shadow-sm w-fit opacity-70">
+          <div className="p-1.5 md:p-2 bg-purple-50 text-purple-600 rounded-md md:rounded-lg">
+            <Activity className="w-3.5 h-3.5 md:w-5 md:h-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Placeholder</span>
-            <span className="text-lg font-bold text-gray-900 leading-none mt-0.5">--</span>
+            <span className="text-[9px] md:text-xs font-semibold uppercase tracking-wider text-gray-500 leading-tight">Placeholder</span>
+            <span className="text-xs md:text-lg font-bold text-gray-900 leading-none mt-0.5">--</span>
           </div>
         </div>
 
         {/* Placeholder 2 */}
-        <div className="flex items-center gap-3 text-gray-600 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm w-fit opacity-70">
-          <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
-            <BarChart2 size={20} />
+        <div className="flex items-center gap-2 md:gap-3 text-gray-600 bg-white px-2.5 md:px-4 py-1.5 md:py-3 rounded-lg md:rounded-xl border border-gray-200 shadow-sm w-fit opacity-70">
+          <div className="p-1.5 md:p-2 bg-amber-50 text-amber-600 rounded-md md:rounded-lg">
+            <BarChart2 className="w-3.5 h-3.5 md:w-5 md:h-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Placeholder</span>
-            <span className="text-lg font-bold text-gray-900 leading-none mt-0.5">--</span>
+            <span className="text-[9px] md:text-xs font-semibold uppercase tracking-wider text-gray-500 leading-tight">Placeholder</span>
+            <span className="text-xs md:text-lg font-bold text-gray-900 leading-none mt-0.5">--</span>
           </div>
         </div>
       </div>
 
       {/* Tabs Header */}
-      <div className="flex flex-wrap items-center justify-center gap-1 p-1 bg-gray-100/80 rounded-xl mb-6 mx-auto w-fit max-w-full mt-4 shrink-0 transition-colors duration-200">
+      <div className="flex flex-nowrap md:flex-wrap items-center justify-between md:justify-center gap-0.5 md:gap-1 p-0.5 md:p-1 bg-gray-100/80 rounded-xl mb-4 md:mb-6 w-full md:w-fit md:mx-auto mt-2 md:mt-4 shrink-0 transition-colors duration-200 overflow-x-auto custom-scrollbar md:overflow-visible">
         <button
             onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex flex-1 md:flex-none items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'new' 
                 ? 'bg-white text-blue-700 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
             }`}
         >
-            <LayoutList size={16} className={activeTab === 'new' ? 'text-blue-500' : 'text-gray-400'} />
-            New Requests
+            <LayoutList className={`w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 ${activeTab === 'new' ? 'text-blue-500' : 'text-gray-400'}`} />
+            <span className="hidden md:inline">New Requests</span>
+            <span className="md:hidden">New</span>
             {pendingEvents.length > 0 && (
-                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${activeTab === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}>
                     {pendingEvents.length}
                 </span>
             )}
         </button>
         <button
             onClick={() => setActiveTab('edits')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex flex-1 md:flex-none items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'edits' 
                 ? 'bg-white text-amber-700 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
             }`}
         >
-            <Edit3 size={16} className={activeTab === 'edits' ? 'text-amber-500' : 'text-gray-400'} />
-            Pending Edits
+            <Edit3 className={`w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 ${activeTab === 'edits' ? 'text-amber-500' : 'text-gray-400'}`} />
+            <span className="hidden md:inline">Pending Edits</span>
+            <span className="md:hidden">Edits</span>
             {editedEvents.length > 0 && (
-                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'edits' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${activeTab === 'edits' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'}`}>
                     {editedEvents.length}
                 </span>
             )}
         </button>
         <button
             onClick={() => setActiveTab('pending_deleted')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex flex-1 md:flex-none items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'pending_deleted' 
                 ? 'bg-white text-red-700 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
             }`}
         >
-            <Trash2 size={16} className={activeTab === 'pending_deleted' ? 'text-red-500' : 'text-gray-400'} />
-            Pending Deletions
+            <Trash2 className={`w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 ${activeTab === 'pending_deleted' ? 'text-red-500' : 'text-gray-400'}`} />
+            <span className="hidden md:inline">Pending Deletions</span>
+            <span className="md:hidden">Deletes</span>
             {pendingDeletedEvents.length > 0 && (
-                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'pending_deleted' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${activeTab === 'pending_deleted' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>
                     {pendingDeletedEvents.length}
                 </span>
             )}
         </button>
         <button
             onClick={() => setActiveTab('rejected')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex flex-1 md:flex-none items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'rejected' 
                 ? 'bg-white text-gray-800 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
             }`}
         >
-            <History size={16} className={activeTab === 'rejected' ? 'text-gray-800' : 'text-gray-400'} />
-            Rejected History
+            <History className={`w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 ${activeTab === 'rejected' ? 'text-gray-800' : 'text-gray-400'}`} />
+            <span className="hidden md:inline">Rejected History</span>
+            <span className="md:hidden">Rejected</span>
             {rejectedEvents.length > 0 && (
-                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'rejected' ? 'bg-gray-100 text-gray-800' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${activeTab === 'rejected' ? 'bg-gray-100 text-gray-800' : 'bg-gray-200 text-gray-600'}`}>
                     {rejectedEvents.length}
                 </span>
             )}
         </button>
         <button
             onClick={() => setActiveTab('deleted')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex flex-1 md:flex-none items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === 'deleted' 
                 ? 'bg-white text-red-800 shadow-sm ring-1 ring-black/5' 
                 : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
             }`}
         >
-            <Trash2 size={16} className={activeTab === 'deleted' ? 'text-red-800' : 'text-gray-400'} />
-            Deleted History
+            <Trash2 className={`w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 ${activeTab === 'deleted' ? 'text-red-800' : 'text-gray-400'}`} />
+            <span className="hidden md:inline">Deleted History</span>
+            <span className="md:hidden">Deleted</span>
             {deletedEvents.length > 0 && (
-                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${activeTab === 'deleted' ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-600'}`}>
+                <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${activeTab === 'deleted' ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-600'}`}>
                     {deletedEvents.length}
                 </span>
             )}
