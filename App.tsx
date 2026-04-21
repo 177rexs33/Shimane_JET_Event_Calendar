@@ -61,6 +61,11 @@ export const App: React.FC = () => {
   const filterMenuRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Cache refs for performance
+  const loadedGridsRef = useRef<Set<string>>(new Set());
+  const fetchingGridsRef = useRef<Set<string>>(new Set());
+  const allEventsMapRef = useRef<Map<string, CalendarEvent>>(new Map());
 
   useEffect(() => {
     const updateScrollbarWidth = () => {
@@ -104,16 +109,32 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (!isAuthReady) return;
 
-    const loadCalendarData = async () => {
-      setIsLoading(true);
-      
+    const loadCalendarData = async (targetDate: Date, isPrefetch = false) => {
       // Calculate the start and end of the visible calendar grid
-      const grid = generateCalendarGrid(currentDate);
+      const grid = generateCalendarGrid(targetDate);
       // To catch events that might start/end exactly on the edges, use 00:00 and 23:59
       const gridStart = new Date(grid[0].date);
       gridStart.setHours(0, 0, 0, 0);
       const gridEnd = new Date(grid[grid.length - 1].date);
       gridEnd.setHours(23, 59, 59, 999);
+
+      const gridKey = `${gridStart.getTime()}-${gridEnd.getTime()}`;
+
+      if (loadedGridsRef.current.has(gridKey)) {
+        if (!isPrefetch) {
+          setEvents(Array.from(allEventsMapRef.current.values()));
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (fetchingGridsRef.current.has(gridKey)) {
+        if (!isPrefetch && events.length === 0) setIsLoading(true);
+        return;
+      }
+
+      fetchingGridsRef.current.add(gridKey);
+      if (!isPrefetch) setIsLoading(true);
 
       const startISO = gridStart.toISOString();
       const endISO = gridEnd.toISOString();
@@ -125,21 +146,41 @@ export const App: React.FC = () => {
           getEventsForMonth(startISO, endISO)
         ]);
         
-        if (!holidayResponse.ok) throw new Error('Failed to fetch holidays');
-        const holidayData = await holidayResponse.json();
+        if (holidayResponse.ok) {
+          const holidayData = await holidayResponse.json();
+          setHolidays(prev => ({...prev, ...holidayData}));
+        }
+        
+        loadedGridsRef.current.add(gridKey);
+        eventData.forEach(e => allEventsMapRef.current.set(e.id, e));
         
         // Single update of data states conceptually
         // Re-rendering will occur after this block
-        setHolidays(holidayData);
-        setEvents(eventData);
+        setEvents(Array.from(allEventsMapRef.current.values()));
       } catch (error) {
         console.error("Error loading calendar data:", error);
       } finally {
-        setIsLoading(false);
+        fetchingGridsRef.current.delete(gridKey);
+        if (!isPrefetch) {
+          setIsLoading(false);
+        }
       }
     };
 
-    loadCalendarData();
+    // 1. Immediately load the currently requested month
+    loadCalendarData(currentDate, false);
+
+    // 2. Set timeout to prefetch adjacent months if the user stays on this month
+    const prefetchTimeout = setTimeout(() => {
+      const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+      
+      loadCalendarData(prevMonth, true);
+      loadCalendarData(nextMonth, true);
+    }, 600); // 600ms linger time
+
+    // 3. Clear timeout if user rapidly navigates away
+    return () => clearTimeout(prefetchTimeout);
   }, [currentDate, isAuthReady]);
 
   useEffect(() => {
