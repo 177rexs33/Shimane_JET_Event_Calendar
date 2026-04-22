@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from './Modal';
 import { CalendarEvent, Region, RecurrenceType, REGION_CITIES, EventCategory } from '../types';
-import { toDateString, toTimeString } from '../utils/dateUtils';
+import { toDateString, toTimeString, sortEventTypes } from '../utils/dateUtils';
 import { Clock, MapPin, AlignLeft, Type, Calendar as CalendarIcon, Globe, ChevronDown, Repeat, Check, AlertCircle, Trash2 } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 
@@ -602,7 +602,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                     {existingEvent.city}
                   </span>
                 )}
-                {existingEvent?.types && existingEvent.types.map(t => (
+                {sortEventTypes(existingEvent?.types).map(t => (
                   <span key={t} className="text-sm font-medium px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md">{t}</span>
                 ))}
               </div>
@@ -907,7 +907,7 @@ export const EventModal: React.FC<EventModalProps> = ({
             <div className="flex flex-col gap-2">
                 {types.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                        {types.map(t => (
+                        {sortEventTypes(types).map(t => (
                             <span key={t} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">
                                 {t}
                                 <button

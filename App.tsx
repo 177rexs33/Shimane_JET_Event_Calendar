@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle, List, Calendar as CalendarIcon, Search, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Repeat, ShieldCheck, LayoutDashboard, Filter, LogOut, Clock, Menu, ShieldAlert, HelpCircle, List, Calendar as CalendarIcon, Search, Loader2, Download } from 'lucide-react';
 import { CalendarEvent, Region, REGION_CITIES, EventCategory } from './types';
 import { 
     generateCalendarGrid, 
@@ -10,7 +10,8 @@ import {
     isEventActiveOnDate,
     formatTime,
     getRegionClasses,
-    getEnglishHolidayName
+    getEnglishHolidayName,
+    sortEventTypes
 } from './utils/dateUtils';
 import { EventModal } from './components/EventModal';
 import { MonthYearSelector } from './components/MonthYearSelector';
@@ -438,11 +439,6 @@ export const App: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-1">
-                        {event.types && event.types.length > 0 && (
-                          <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                            {event.types.join(', ')}
-                          </span>
-                        )}
                         <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
                           {event.region}
                         </span>
@@ -451,6 +447,11 @@ export const App: React.FC = () => {
                             {event.city}
                           </span>
                         )}
+                        {event.types && event.types.length > 0 && sortEventTypes(event.types).map(type => (
+                          <span key={type} className="text-[10px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                            {type}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -471,6 +472,79 @@ export const App: React.FC = () => {
     const dateString = `${year}-${month}-${day}`;
     return holidays[dateString];
   }, [selectedDayViewDate, showNationalHolidays, holidays]);
+
+  const exportToICS = () => {
+    const officialEvents = events.filter(e => e.status === 'approved' || e.status === undefined);
+
+    let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Shimane JET Event Calendar//EN\n";
+
+    officialEvents.forEach(event => {
+      icsContent += "BEGIN:VEVENT\n";
+      icsContent += `UID:${event.id}@shimane-jet.com\n`;
+      
+      const now = new Date();
+      icsContent += `DTSTAMP:${now.toISOString().replace(/[-:]/g, '').split('.')[0]}Z\n`;
+
+      if (event.isAllDay) {
+        const start = new Date(event.start);
+        const end = new Date(event.end);
+        end.setDate(end.getDate() + 1);
+        
+        const formatAllDay = (d: Date) => {
+          return d.getFullYear() +
+                 String(d.getMonth() + 1).padStart(2, '0') +
+                 String(d.getDate()).padStart(2, '0');
+        };
+        
+        icsContent += `DTSTART;VALUE=DATE:${formatAllDay(start)}\n`;
+        icsContent += `DTEND;VALUE=DATE:${formatAllDay(end)}\n`;
+      } else {
+        const start = new Date(event.start);
+        const end = new Date(event.end);
+        
+        const formatTimeEvent = (d: Date) => {
+             return d.getUTCFullYear() +
+                    String(d.getUTCMonth() + 1).padStart(2, '0') +
+                    String(d.getUTCDate()).padStart(2, '0') + 'T' +
+                    String(d.getUTCHours()).padStart(2, '0') +
+                    String(d.getUTCMinutes()).padStart(2, '0') +
+                    String(d.getUTCSeconds()).padStart(2, '0') + 'Z';
+        };
+
+        icsContent += `DTSTART:${formatTimeEvent(start)}\n`;
+        icsContent += `DTEND:${formatTimeEvent(end)}\n`;
+      }
+
+      let summary = event.title || '';
+      summary = summary.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+      icsContent += `SUMMARY:${summary}\n`;
+      
+      if (event.description) {
+         let desc = event.description.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+         icsContent += `DESCRIPTION:${desc}\n`;
+      }
+      
+      const locations = [event.city, event.region].filter(Boolean);
+      if (locations.length > 0) {
+         let locStr = locations.join(', ').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+         icsContent += `LOCATION:${locStr}\n`;
+      }
+
+      icsContent += "END:VEVENT\n";
+    });
+
+    icsContent += "END:VCALENDAR";
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'shimane-jet-events.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 text-gray-900 font-sans">
@@ -582,6 +656,13 @@ export const App: React.FC = () => {
                             >
                                 <List size={18} />
                                 {isEventView ? 'Calendar View' : 'Event View'}
+                            </button>
+                            <button 
+                                onClick={() => { exportToICS(); setIsMenuOpen(false); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                <Download size={18} />
+                                Export Calendar
                             </button>
                             {isAdminSession ? (
                                 <button 
@@ -725,6 +806,13 @@ export const App: React.FC = () => {
                         >
                             <List size={16} />
                             {isEventView ? 'Calendar View' : 'Event View'}
+                        </button>
+                        <button 
+                            onClick={() => { exportToICS(); setIsMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            <Download size={16} />
+                            Export Calendar
                         </button>
                         {isAdminSession ? (
                             <button 

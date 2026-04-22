@@ -1,5 +1,21 @@
 
-import { Region, CalendarEvent } from '../types';
+import { Region, CalendarEvent, EventCategory } from '../types';
+
+export const EVENT_CATEGORY_ORDER: EventCategory[] = [
+  'JET',
+  'AJET',
+  'Local Event',
+  'Festival',
+  'Sports',
+  'Music',
+  'Cultural Exchange',
+  'Other'
+];
+
+export const sortEventTypes = (types: EventCategory[] | undefined): EventCategory[] => {
+  if (!types) return [];
+  return [...types].sort((a, b) => EVENT_CATEGORY_ORDER.indexOf(a) - EVENT_CATEGORY_ORDER.indexOf(b));
+};
 
 export const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",

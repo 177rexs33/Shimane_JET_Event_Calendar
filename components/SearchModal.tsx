@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, X, Calendar as CalendarIcon, MapPin, ArrowRight } from 'lucide-react';
 import { CalendarEvent } from '../types';
 import { Modal } from './Modal';
-import { getRegionClasses, formatFriendlyDate, formatTime } from '../utils/dateUtils';
+import { getRegionClasses, formatFriendlyDate, formatTime, sortEventTypes } from '../utils/dateUtils';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -86,7 +86,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, event
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{event.title}</h3>
                     <div className="flex gap-1">
-                      {event.types && event.types.map(type => (
+                      {sortEventTypes(event.types).map(type => (
                         <span key={type} className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-100 text-blue-800">
                           {type}
                         </span>
