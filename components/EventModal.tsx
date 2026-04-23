@@ -14,6 +14,7 @@ interface EventModalProps {
   initialDate?: Date | null;
   existingEvent?: CalendarEvent | null;
   isAdmin?: boolean;
+  holidays?: Record<string, string>;
 }
 
 interface DateInputProps {
@@ -298,7 +299,8 @@ export const EventModal: React.FC<EventModalProps> = ({
   onDelete,
   initialDate, 
   existingEvent,
-  isAdmin = false
+  isAdmin = false,
+  holidays
 }) => {
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState(''); 
@@ -704,6 +706,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                             <div className={`absolute left-0 z-50 ${calendarPos === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
                                  <MiniCalendar 
                                     initialDate={startDate ? new Date(startDate) : new Date()} 
+                                    holidays={holidays}
                                     onSelectDate={(d) => {
                                         handleDateSelect('start', d);
                                         if (formErrors.startDate) setFormErrors(prev => ({ ...prev, startDate: false }));
@@ -756,6 +759,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                             <div className={`absolute left-0 z-50 ${calendarPos === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
                                 <MiniCalendar 
                                     initialDate={endDate ? new Date(endDate) : new Date()} 
+                                    holidays={holidays}
                                     onSelectDate={(d) => {
                                         handleDateSelect('end', d);
                                         if (formErrors.endDate) setFormErrors(prev => ({ ...prev, endDate: false }));

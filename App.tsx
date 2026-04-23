@@ -1038,6 +1038,7 @@ export const App: React.FC = () => {
         initialDate={selectedDate}
         existingEvent={selectedEvent}
         isAdmin={isAdminSession}
+        holidays={showNationalHolidays ? holidays : undefined}
       />
       
       <LoginModal 
