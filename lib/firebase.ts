@@ -164,6 +164,17 @@ export const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
 };
 
 // Get approved events from 'events' collection for a specific month
+export const getPendingRequestsCount = async (): Promise<number> => {
+  try {
+    const q = query(collection(db, "pending_events"));
+    const snapshot = await getDocs(q);
+    return snapshot.size;
+  } catch (e) {
+    console.error("Failed to get pending requests count", e);
+    return 0; // Return 0 rather than throw so it doesn't break polling
+  }
+};
+
 export const getEventsForMonth = async (startISO: string, endISO: string): Promise<CalendarEvent[]> => {
   try {
     const q = query(
@@ -309,6 +320,20 @@ export const updateEvent = async (event: CalendarEvent) => {
     }
   } catch (e) {
     handleFirestoreError(e, OperationType.UPDATE, (event.status === 'edited' || event.status === 'deleted') ? 'pending_events' : `events/${event.id}`);
+  }
+};
+
+export const updatePendingEvent = async (event: CalendarEvent) => {
+  try {
+    const { id, ...eventData } = event;
+    const eventRef = doc(db, "pending_events", id);
+    await updateDoc(eventRef, {
+      ...eventData,
+      adminUid: auth.currentUser?.uid,
+      updatedAt: serverTimestamp()
+    } as any);
+  } catch (e) {
+    handleFirestoreError(e, OperationType.UPDATE, `pending_events/${event.id}`);
   }
 };
 

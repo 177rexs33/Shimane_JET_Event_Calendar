@@ -10,6 +10,7 @@ import {
     isEventActiveOnDate,
     formatTime,
     getRegionClasses,
+    getRegionDotClass,
     getEnglishHolidayName,
     sortEventTypes
 } from './utils/dateUtils';
@@ -23,12 +24,13 @@ import { ContactModal } from './components/ContactModal';
 import { SearchModal } from './components/SearchModal';
 import { DayViewModal } from './components/DayViewModal';
 import { FilterDropdown } from './components/FilterDropdown';
-import { getEventsForMonth, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut } from './lib/firebase';
+import { getEventsForMonth, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut, getPendingRequestsCount } from './lib/firebase';
 
 export const App: React.FC = () => {
   const [isEventView, setIsEventView] = useState(window.innerWidth < 768);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<Region | 'All'>('All');
@@ -45,7 +47,7 @@ export const App: React.FC = () => {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isDayViewModalOpen, setIsDayViewModalOpen] = useState(false);
   const [selectedDayViewDate, setSelectedDayViewDate] = useState<Date | null>(null);
-  const [eventModalSource, setEventModalSource] = useState<'calendar' | 'dayView' | 'search' | null>(null);
+  const [eventModalSource, setEventModalSource] = useState<'calendar' | 'dayView' | 'search' | 'admin_pending' | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   
@@ -110,7 +112,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (!isAuthReady) return;
 
-    const loadCalendarData = async (targetDate: Date, isPrefetch = false) => {
+    const loadCalendarData = async (targetDate: Date, isPrefetch = false, isBackgroundPoll = false) => {
       // Calculate the start and end of the visible calendar grid
       const grid = generateCalendarGrid(targetDate);
       // To catch events that might start/end exactly on the edges, use 00:00 and 23:59
@@ -124,18 +126,18 @@ export const App: React.FC = () => {
       if (loadedGridsRef.current.has(gridKey)) {
         if (!isPrefetch) {
           setEvents(Array.from(allEventsMapRef.current.values()));
-          setIsLoading(false);
+          if (!isBackgroundPoll) setIsLoading(false);
         }
         return;
       }
 
       if (fetchingGridsRef.current.has(gridKey)) {
-        if (!isPrefetch && events.length === 0) setIsLoading(true);
+        if (!isPrefetch && events.length === 0 && !isBackgroundPoll) setIsLoading(true);
         return;
       }
 
       fetchingGridsRef.current.add(gridKey);
-      if (!isPrefetch) setIsLoading(true);
+      if (!isPrefetch && events.length === 0 && !isBackgroundPoll) setIsLoading(true);
 
       const startISO = gridStart.toISOString();
       const endISO = gridEnd.toISOString();
@@ -151,6 +153,11 @@ export const App: React.FC = () => {
           const holidayData = await holidayResponse.json();
           setHolidays(prev => ({...prev, ...holidayData}));
         }
+
+        if (!isPrefetch && fetchingGridsRef.current.size === 1) {
+            // When not prefetching and it's the primary fetch, we can clear to remove deleted events
+            allEventsMapRef.current.clear();
+        }
         
         loadedGridsRef.current.add(gridKey);
         eventData.forEach(e => allEventsMapRef.current.set(e.id, e));
@@ -162,7 +169,7 @@ export const App: React.FC = () => {
         console.error("Error loading calendar data:", error);
       } finally {
         fetchingGridsRef.current.delete(gridKey);
-        if (!isPrefetch) {
+        if (!isPrefetch && !isBackgroundPoll) {
           setIsLoading(false);
         }
       }
@@ -170,6 +177,7 @@ export const App: React.FC = () => {
 
     // 1. Immediately load the currently requested month
     loadCalendarData(currentDate, false);
+    getPendingRequestsCount().then(setPendingRequestsCount);
 
     // 2. Set timeout to prefetch adjacent months if the user stays on this month
     const prefetchTimeout = setTimeout(() => {
@@ -180,8 +188,24 @@ export const App: React.FC = () => {
       loadCalendarData(nextMonth, true);
     }, 600); // 600ms linger time
 
-    // 3. Clear timeout if user rapidly navigates away
-    return () => clearTimeout(prefetchTimeout);
+    // 3. Set interval to poll for updates on a regular basis (e.g. 5 minutes)
+    const intervalId = setInterval(() => {
+      loadedGridsRef.current.clear();
+      
+      const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+      
+      loadCalendarData(currentDate, false, true);
+      loadCalendarData(prevMonth, true, true);
+      loadCalendarData(nextMonth, true, true);
+      getPendingRequestsCount().then(setPendingRequestsCount);
+    }, 60000); // 60,000ms = 1 minute
+
+    // 4. Clear timeout and interval if user rapidly navigates away or component unmounts
+    return () => {
+      clearTimeout(prefetchTimeout);
+      clearInterval(intervalId);
+    };
   }, [currentDate, isAuthReady]);
 
   useEffect(() => {
@@ -302,6 +326,19 @@ export const App: React.FC = () => {
     const finalEvent = { ...event };
 
     if (isAdminSession) {
+        if (eventModalSource === 'admin_pending' && selectedEvent) {
+            // Edit the pending event in place, preserve its original status
+            finalEvent.status = selectedEvent.status;
+            // Restore its originalData if it had one, or delete if it shouldn't
+            if (selectedEvent.originalData) {
+                finalEvent.originalData = selectedEvent.originalData;
+            } else {
+                delete finalEvent.originalData;
+            }
+            import('./lib/firebase').then(m => m.updatePendingEvent(finalEvent));
+            return;
+        }
+
         // Admins: Direct approval and update
         finalEvent.status = 'approved';
         // Cleanup snapshot data as it's not needed for direct updates
@@ -645,10 +682,17 @@ export const App: React.FC = () => {
                             </button>
                             <button 
                                 onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                                className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
                             >
-                                <Clock size={18} />
-                                Pending Requests
+                                <div className="flex items-center gap-3">
+                                    <Clock size={18} />
+                                    Pending Requests
+                                </div>
+                                {pendingRequestsCount > 0 && (
+                                    <span className="bg-amber-100 text-amber-600 py-0.5 px-2 rounded-full text-xs">
+                                        {pendingRequestsCount}
+                                    </span>
+                                )}
                             </button>
                             <button 
                                 onClick={() => { setIsEventView(!isEventView); setIsMenuOpen(false); }}
@@ -795,10 +839,17 @@ export const App: React.FC = () => {
                         </button>
                         <button 
                             onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                            className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
                         >
-                            <Clock size={16} />
-                            Pending Requests
+                            <div className="flex items-center gap-3">
+                                <Clock size={16} />
+                                Pending Requests
+                            </div>
+                            {pendingRequestsCount > 0 && (
+                                <span className="bg-amber-100 text-amber-600 py-0.5 px-2 rounded-full text-xs">
+                                    {pendingRequestsCount}
+                                </span>
+                            )}
                         </button>
                         <button 
                             onClick={() => { setIsEventView(!isEventView); setIsMenuOpen(false); }}
@@ -899,7 +950,16 @@ export const App: React.FC = () => {
                 <p className="text-lg font-medium">Loading calendar...</p>
             </div>
         ) : view === 'admin' && isAdminSession ? (
-            <div className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden"><AdminDashboard /></div>
+            <div className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
+                <AdminDashboard 
+                    onEditEvent={(event, source) => {
+                        setSelectedEvent(event);
+                        setSelectedDate(new Date(event.start));
+                        setEventModalSource(source);
+                        setIsEventModalOpen(true);
+                    }}
+                />
+            </div>
         ) : view === 'admin' ? (
              <div className="flex items-center justify-center h-full p-4 md:p-6">
                  <p className="text-gray-500">Please log in to view the dashboard.</p>
@@ -908,15 +968,18 @@ export const App: React.FC = () => {
             renderEventView()
         ) : (
             <>
-                <div className="w-full flex-1 flex flex-col overflow-auto" ref={scrollContainerRef}>
-                    <div className="min-w-[700px] flex flex-col h-full px-4 md:px-6 pb-4">
-                        <div className="grid grid-cols-7 mb-2 sticky top-0 z-20 bg-gray-50 py-1.5 -mx-4 px-4 md:-mx-6 md:px-6 shadow-sm border-b border-gray-200/50 backdrop-blur-sm bg-gray-50/90">
+                <div className="w-full flex-1 flex flex-col overflow-hidden" ref={scrollContainerRef}>
+                    <div className="flex flex-col h-full px-2 md:px-6 pb-2 md:pb-4 bg-white md:bg-transparent md:pt-0">
+                        <div className="grid grid-cols-7 mb-1 md:mb-2 sticky top-0 z-20 bg-white md:bg-gray-50 py-1.5 -mx-2 px-2 md:-mx-6 md:px-6 shadow-sm border-b border-gray-200/50 backdrop-blur-sm md:bg-gray-50/90">
                             {WEEK_DAYS.map(day => (
-                                <div key={day} className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{day}</div>
+                                <div key={day} className="text-center text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    <span className="hidden md:inline">{day}</span>
+                                    <span className="md:hidden">{day.charAt(0)}</span>
+                                </div>
                             ))}
                         </div>
 
-                        <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-1 md:gap-2 min-h-[500px]">
+                        <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-0.5 md:gap-2 min-h-0">
                             {gridData.map((cell, index) => {
                                 const isToday = isSameDay(cell.date, new Date());
                                 const dayEvents = approvedEvents.filter(e => isEventActiveOnDate(cell.date, e))
@@ -927,6 +990,9 @@ export const App: React.FC = () => {
                                 const day = String(cell.date.getDate()).padStart(2, '0');
                                 const dateString = `${year}-${month}-${day}`;
                                 const holidayName = showNationalHolidays ? holidays[dateString] : undefined;
+                                
+                                // Get unique regions for mobile dots
+                                const uniqueRegions = Array.from(new Set(dayEvents.map(e => e.region))).slice(0, 4);
 
                                 return (
                                     <div 
@@ -936,16 +1002,16 @@ export const App: React.FC = () => {
                                             setIsDayViewModalOpen(true);
                                         }}
                                         className={`
-                                            relative bg-white rounded-2xl p-1.5 border border-gray-100 
-                                            transition-all hover:shadow-md flex flex-col gap-0.5 overflow-hidden group cursor-pointer
-                                            ${!cell.isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : 'text-gray-700'}
-                                            ${isToday ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
+                                            relative md:bg-white md:rounded-2xl p-0.5 md:p-1.5 md:border md:border-gray-100 
+                                            transition-all md:hover:shadow-md flex flex-col md:gap-0.5 group cursor-pointer items-center md:items-stretch justify-start
+                                            ${!cell.isCurrentMonth ? 'md:bg-gray-50/50 text-gray-300 md:text-gray-400' : 'text-gray-700'}
+                                            ${isToday ? 'md:ring-2 md:ring-blue-500 md:ring-offset-2' : ''}
                                             ${holidayName ? 'holiday' : ''}
                                         `}
                                     >
-                                        <div className="flex justify-between items-start">
-                                            <div className="relative w-5 h-5 shrink-0">
-                                                <span className={`absolute inset-0 text-xs font-medium flex items-center justify-center rounded-full transition-opacity md:group-hover:opacity-0 ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? 'bg-red-600 text-white' : ''}`}>
+                                        <div className="flex justify-center md:justify-between items-start w-full">
+                                            <div className="relative w-7 h-7 md:w-5 md:h-5 shrink-0 flex items-center justify-center">
+                                                <span className={`absolute inset-0 text-[13px] md:text-xs font-medium flex items-center justify-center rounded-full transition-opacity md:group-hover:opacity-0 ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? 'bg-red-600 text-white' : ''} ${!isToday && holidayName ? 'text-red-500 md:text-gray-700' : ''}`}>
                                                     {cell.date.getDate()}
                                                 </span>
                                                 <button onClick={(e) => { e.stopPropagation(); handleDateClick(cell.date); }} className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity bg-blue-100 text-blue-600 rounded-full hidden md:flex items-center justify-center cursor-pointer">
@@ -953,7 +1019,7 @@ export const App: React.FC = () => {
                                                 </button>
                                             </div>
                                             {holidayName && (
-                                                <div className="flex flex-col items-end ml-1 flex-1 overflow-hidden">
+                                                <div className="hidden md:flex flex-col items-end ml-1 flex-1 overflow-hidden">
                                                     <span className="text-[9px] font-semibold truncate w-full text-right leading-tight holiday-text">
                                                         {holidayName}
                                                     </span>
@@ -964,7 +1030,17 @@ export const App: React.FC = () => {
                                             )}
                                         </div>
 
-                                        <div className="flex-1 flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden custom-scrollbar mt-0.5">
+                                        {/* Mobile View: Dots container */}
+                                        <div className="md:hidden flex flex-row flex-wrap items-center justify-center gap-[3px] mt-0.5 max-w-full">
+                                            {uniqueRegions.map(region => (
+                                                <div 
+                                                    key={region}
+                                                    className={`w-1.5 h-1.5 rounded-full ${getRegionDotClass(region as Region)}`}
+                                                />
+                                            ))}
+                                        </div>
+
+                                        <div className="hidden md:flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden custom-scrollbar mt-0.5">
                                             {dayEvents.length > 3 ? (
                                                 <div className="flex-1 flex flex-col justify-center min-h-0 h-full">
                                                     <div className="grid grid-cols-2 auto-rows-fr gap-1 h-full">
@@ -1083,6 +1159,13 @@ export const App: React.FC = () => {
           setSelectedEvent(event);
           setEventModalSource('dayView');
           setIsEventModalOpen(true);
+        }}
+        onAddEvent={() => {
+          setSelectedEvent(null);
+          setSelectedDate(selectedDayViewDate);
+          setEventModalSource('dayView');
+          setIsEventModalOpen(true);
+          setIsDayViewModalOpen(false);
         }}
       />
     </div>

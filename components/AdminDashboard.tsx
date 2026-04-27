@@ -22,7 +22,11 @@ import { formatFriendlyDate, formatTime, getRegionClasses, sortEventTypes } from
 
 type Tab = 'new' | 'edits' | 'pending_deleted' | 'rejected' | 'deleted';
 
-export const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  onEditEvent?: (event: CalendarEvent, source: 'admin_pending') => void;
+}
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent }) => {
   const [pendingEvents, setPendingEvents] = useState<CalendarEvent[]>([]);
   const [editedEvents, setEditedEvents] = useState<CalendarEvent[]>([]);
   const [pendingDeletedEvents, setPendingDeletedEvents] = useState<CalendarEvent[]>([]);
@@ -386,6 +390,14 @@ export const AdminDashboard: React.FC = () => {
                                     </div>
 
                                     <div className="flex items-center gap-2 md:self-center pt-2 md:pt-0 border-t md:border-t-0 border-gray-100 shrink-0">
+                                        {onEditEvent && (
+                                            <button 
+                                                onClick={() => onEditEvent(event, 'admin_pending')}
+                                                className="flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 font-medium text-sm transition-colors"
+                                            >
+                                                <Edit3 size={16} />
+                                            </button>
+                                        )}
                                         <button 
                                             onClick={() => handleStatusChange(event, 'rejected')}
                                             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 hover:border-red-300 font-medium text-sm transition-colors"
@@ -547,6 +559,15 @@ export const AdminDashboard: React.FC = () => {
 
                                     {/* Actions Footer */}
                                     <div className="bg-gray-50 px-5 py-3 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
+                                        {onEditEvent && (
+                                            <button 
+                                                onClick={() => onEditEvent(event, 'admin_pending')}
+                                                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-blue-200 text-blue-700 bg-white hover:bg-blue-50 font-medium text-sm transition-colors w-full sm:w-auto"
+                                            >
+                                                <Edit3 size={16} />
+                                                Edit Before Approving
+                                            </button>
+                                        )}
                                         <button 
                                             onClick={() => handleEditApproval(event, false)}
                                             className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 bg-white hover:bg-gray-50 hover:text-red-600 hover:border-red-200 font-medium text-sm transition-colors w-full sm:w-auto"

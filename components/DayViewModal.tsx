@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Modal } from './Modal';
 import { CalendarEvent } from '../types';
 import { getRegionClasses, formatTime, isEventActiveOnDate, getEnglishHolidayName } from '../utils/dateUtils';
-import { Clock, Repeat, List, Calendar as CalendarIcon, MapPin } from 'lucide-react';
+import { Clock, Repeat, List, Calendar as CalendarIcon, MapPin, Plus } from 'lucide-react';
 
 interface DayViewModalProps {
   isOpen: boolean;
@@ -10,10 +10,11 @@ interface DayViewModalProps {
   date: Date | null;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
+  onAddEvent?: () => void;
   holidayName?: string;
 }
 
-export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, date, events, onEventClick, holidayName }) => {
+export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, date, events, onEventClick, onAddEvent, holidayName }) => {
   const [viewMode, setViewMode] = useState<'timeline' | 'list'>('timeline');
 
   const dayEvents = useMemo(() => {
@@ -45,13 +46,24 @@ export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, dat
           </div>
         )}
       </div>
-      <button 
-        onClick={() => setViewMode(prev => prev === 'timeline' ? 'list' : 'timeline')}
-        className="flex items-center justify-center w-7 h-7 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors ml-2 shrink-0"
-        title={viewMode === 'timeline' ? 'Switch to List View' : 'Switch to Hourly View'}
-      >
-        {viewMode === 'timeline' ? <List size={18} /> : <Clock size={18} />}
-      </button>
+      <div className="flex items-center gap-1 shrink-0 ml-2">
+        <button 
+          onClick={() => setViewMode(prev => prev === 'timeline' ? 'list' : 'timeline')}
+          className="flex items-center justify-center w-7 h-7 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+          title={viewMode === 'timeline' ? 'Switch to List View' : 'Switch to Hourly View'}
+        >
+          {viewMode === 'timeline' ? <List size={18} /> : <Clock size={18} />}
+        </button>
+        {onAddEvent && (
+          <button 
+            onClick={onAddEvent}
+            className="flex items-center justify-center w-7 h-7 text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 rounded-md transition-colors"
+            title="Add Event"
+          >
+            <Plus size={18} />
+          </button>
+        )}
+      </div>
     </div>
   );
 

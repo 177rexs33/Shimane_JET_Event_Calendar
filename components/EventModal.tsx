@@ -259,11 +259,11 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
     };
 
     return (
-        <div className={`flex items-center border rounded-lg h-10 w-full sm:w-36 relative transition-all group ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'}`}>
+        <div className={`flex items-center border rounded-lg h-10 w-36 relative transition-all group ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'}`}>
              <div className={`absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none z-10 ${hasError ? 'text-red-400' : 'text-gray-400'}`}>
                 <Clock size={16} />
             </div>
-            <div className="flex items-center pl-8 pr-2 w-full justify-between">
+            <div className="flex items-center pl-8 pr-2 w-full justify-center gap-1">
                 <input 
                     ref={inputRef}
                     type="text"

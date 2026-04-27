@@ -172,6 +172,22 @@ export const getRegionClasses = (region: string) => {
     return 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200';
 };
 
+export const getRegionDotClass = (region: string) => {
+    if (region.includes('Iwami')) {
+        return 'bg-amber-500';
+    }
+    if (region.includes('Izumo')) {
+        return 'bg-blue-500';
+    }
+    if (region.includes('Oki')) {
+        return 'bg-emerald-500';
+    }
+    if (region.includes('Outside')) {
+        return 'bg-violet-500';
+    }
+    return 'bg-gray-500';
+};
+
 export const getEnglishHolidayName = (japaneseName: string): string => {
     const translations: Record<string, string> = {
         "元日": "New Year's Day",

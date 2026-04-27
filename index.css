@@ -42,8 +42,13 @@ input[type="datetime-local"]::-webkit-clear-button {
 
 .holiday {
   color: #dc2626 !important;
-  background-color: #fef2f2 !important;
-  border-color: #fca5a5 !important;
+}
+
+@media (min-width: 768px) {
+  .holiday {
+    background-color: #fef2f2 !important;
+    border-color: #fca5a5 !important;
+  }
 }
 
 .holiday .holiday-text {
