@@ -24,9 +24,10 @@ type Tab = 'new' | 'edits' | 'pending_deleted' | 'rejected' | 'deleted';
 
 interface AdminDashboardProps {
   onEditEvent?: (event: CalendarEvent, source: 'admin_pending') => void;
+  onDataChange?: () => void;
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent, onDataChange }) => {
   const [pendingEvents, setPendingEvents] = useState<CalendarEvent[]>([]);
   const [editedEvents, setEditedEvents] = useState<CalendarEvent[]>([]);
   const [pendingDeletedEvents, setPendingDeletedEvents] = useState<CalendarEvent[]>([]);
@@ -86,6 +87,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent }) =
           // Restore from rejected
           await restoreRejectedEvent(event);
       }
+      onDataChange?.();
     } catch (e) {
       console.error("Failed to update status", e);
       alert("Failed to update status. Please try again.");
@@ -100,6 +102,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent }) =
               // Reject the edit request
               await rejectRequest(event);
           }
+          onDataChange?.();
       } catch (e) {
           console.error("Failed to process edit approval", e);
           alert("Failed to process action. Please try again.");
@@ -114,6 +117,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent }) =
               // Reject the deletion request
               await rejectRequest(event);
           }
+          onDataChange?.();
       } catch (e) {
           console.error("Failed to process deletion approval", e);
           alert("Failed to process action. Please try again.");
@@ -123,6 +127,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent }) =
   const handleRestoreDeleted = async (event: CalendarEvent) => {
       try {
           await restoreDeletedEvent(event);
+          onDataChange?.();
       } catch (e) {
           console.error("Failed to restore deleted event", e);
           alert("Failed to restore event. Please try again.");
@@ -133,6 +138,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent }) =
       try {
           await hardDeleteEvent(event.id);
           setEventToDelete(null);
+          onDataChange?.();
       } catch (e) {
           console.error("Failed to permanently delete event", e);
           alert("Failed to permanently delete event. Please try again.");
@@ -143,6 +149,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent }) =
       try {
           await hardDeleteRejectedEvent(event.id);
           setRejectedEventToDelete(null);
+          onDataChange?.();
       } catch (e) {
           console.error("Failed to permanently delete rejected event", e);
           alert("Failed to permanently delete event. Please try again.");

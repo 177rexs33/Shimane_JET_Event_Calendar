@@ -26,7 +26,9 @@ import { ContactModal } from './components/ContactModal';
 import { SearchModal } from './components/SearchModal';
 import { DayViewModal } from './components/DayViewModal';
 import { FilterDropdown } from './components/FilterDropdown';
-import { getEventsForMonth, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut, getPendingRequestsCount } from './lib/firebase';
+import { listenToEventsForMonth, getEventsForMonth, addEvent, updateEvent, softDeleteEvent, auth, onAuthStateChanged, signOut, getPendingRequestsCount } from './lib/firebase';
+
+
 
 export const App: React.FC = () => {
   const [isEventView, setIsEventView] = useState(window.innerWidth < 768);
@@ -39,6 +41,7 @@ export const App: React.FC = () => {
   const [selectedCityFilter, setSelectedCityFilter] = useState<string>('Whole Region');
   const [selectedTypeFilters, setSelectedTypeFilters] = useState<EventCategory[]>([]);
   const [showNationalHolidays, setShowNationalHolidays] = useState(true);
+  
   
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -67,10 +70,7 @@ export const App: React.FC = () => {
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  // Cache refs for performance
-  const loadedGridsRef = useRef<Set<string>>(new Set());
-  const fetchingGridsRef = useRef<Set<string>>(new Set());
-  const allEventsMapRef = useRef<Map<string, CalendarEvent>>(new Map());
+  
 
   useEffect(() => {
     const updateScrollbarWidth = () => {
@@ -114,99 +114,35 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (!isAuthReady) return;
 
-    const loadCalendarData = async (targetDate: Date, isPrefetch = false, isBackgroundPoll = false) => {
-      // Calculate the start and end of the visible calendar grid
-      const grid = generateCalendarGrid(targetDate);
-      // To catch events that might start/end exactly on the edges, use 00:00 and 23:59
-      const gridStart = new Date(grid[0].date);
-      gridStart.setHours(0, 0, 0, 0);
-      const gridEnd = new Date(grid[grid.length - 1].date);
-      gridEnd.setHours(23, 59, 59, 999);
+    const grid = generateCalendarGrid(currentDate);
+    const currentMonthStart = new Date(grid[0].date);
+    currentMonthStart.setHours(0, 0, 0, 0);
+    const currentMonthEnd = new Date(grid[grid.length - 1].date);
+    currentMonthEnd.setHours(23, 59, 59, 999);
 
-      const gridKey = `${gridStart.getTime()}-${gridEnd.getTime()}`;
+    const startISO = currentMonthStart.toISOString();
+    const endISO = currentMonthEnd.toISOString();
 
-      if (loadedGridsRef.current.has(gridKey)) {
-        if (!isPrefetch) {
-          setEvents(Array.from(allEventsMapRef.current.values()));
-          if (!isBackgroundPoll) setIsLoading(false);
-        }
-        return;
-      }
+    setIsLoading(true);
 
-      if (fetchingGridsRef.current.has(gridKey)) {
-        if (!isPrefetch && events.length === 0 && !isBackgroundPoll) setIsLoading(true);
-        return;
-      }
+    // Fetch holidays
+    fetch('https://holidays-jp.github.io/api/v1/date.json')
+      .then(res => res.ok ? res.json() : {})
+      .then(holidayData => setHolidays(prev => ({...prev, ...holidayData})))
+      .catch(err => console.error("Error fetching holidays:", err));
 
-      fetchingGridsRef.current.add(gridKey);
-      if (!isPrefetch && events.length === 0 && !isBackgroundPoll) setIsLoading(true);
+    const unsubscribe = listenToEventsForMonth(startISO, endISO, (newEvents) => {
+      setEvents(newEvents);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error loading calendar data:", error);
+      setIsLoading(false);
+    });
 
-      const startISO = gridStart.toISOString();
-      const endISO = gridEnd.toISOString();
-
-      try {
-        // Parallel fetching of holidays and Firestore events
-        const [holidayResponse, eventData] = await Promise.all([
-          fetch('https://holidays-jp.github.io/api/v1/date.json'),
-          getEventsForMonth(startISO, endISO)
-        ]);
-        
-        if (holidayResponse.ok) {
-          const holidayData = await holidayResponse.json();
-          setHolidays(prev => ({...prev, ...holidayData}));
-        }
-
-        if (!isPrefetch && fetchingGridsRef.current.size === 1) {
-            // When not prefetching and it's the primary fetch, we can clear to remove deleted events
-            allEventsMapRef.current.clear();
-        }
-        
-        loadedGridsRef.current.add(gridKey);
-        eventData.forEach(e => allEventsMapRef.current.set(e.id, e));
-        
-        // Single update of data states conceptually
-        // Re-rendering will occur after this block
-        setEvents(Array.from(allEventsMapRef.current.values()));
-      } catch (error) {
-        console.error("Error loading calendar data:", error);
-      } finally {
-        fetchingGridsRef.current.delete(gridKey);
-        if (!isPrefetch && !isBackgroundPoll) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    // 1. Immediately load the currently requested month
-    loadCalendarData(currentDate, false);
     getPendingRequestsCount().then(setPendingRequestsCount);
 
-    // 2. Set timeout to prefetch adjacent months if the user stays on this month
-    const prefetchTimeout = setTimeout(() => {
-      const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-      const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-      
-      loadCalendarData(prevMonth, true);
-      loadCalendarData(nextMonth, true);
-    }, 600); // 600ms linger time
-
-    // 3. Set interval to poll for updates on a regular basis (e.g. 5 minutes)
-    const intervalId = setInterval(() => {
-      loadedGridsRef.current.clear();
-      
-      const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-      const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-      
-      loadCalendarData(currentDate, false, true);
-      loadCalendarData(prevMonth, true, true);
-      loadCalendarData(nextMonth, true, true);
-      getPendingRequestsCount().then(setPendingRequestsCount);
-    }, 60000); // 60,000ms = 1 minute
-
-    // 4. Clear timeout and interval if user rapidly navigates away or component unmounts
     return () => {
-      clearTimeout(prefetchTimeout);
-      clearInterval(intervalId);
+      unsubscribe();
     };
   }, [currentDate, isAuthReady]);
 
@@ -337,7 +273,11 @@ export const App: React.FC = () => {
             } else {
                 delete finalEvent.originalData;
             }
-            import('./lib/firebase').then(m => m.updatePendingEvent(finalEvent));
+            import('./lib/firebase').then(async m => {
+                await m.updatePendingEvent(finalEvent);
+                
+                
+            });
             return;
         }
 
@@ -358,12 +298,20 @@ export const App: React.FC = () => {
         const { id, ...eventData } = finalEvent;
         await addEvent(eventData);
     }
+    
+    // Clear cache and force refresh
+    
+    
   };
 
   const handleDeleteEvent = async (event: CalendarEvent) => {
     try {
         await softDeleteEvent(event);
         setIsEventModalOpen(false);
+        // Clear cache and force refresh
+        
+        
+
         if (eventModalSource === 'dayView') {
           setIsDayViewModalOpen(true);
         } else if (eventModalSource === 'search') {
@@ -640,7 +588,7 @@ export const App: React.FC = () => {
                     </button>
                     
                     {isMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                        <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
                             {view === 'calendar' && (
                                 <>
                                     <button 
@@ -687,7 +635,7 @@ export const App: React.FC = () => {
                                 onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
                                 className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
                             >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 whitespace-nowrap">
                                     <Clock size={18} />
                                     Pending Requests
                                 </div>
@@ -832,7 +780,7 @@ export const App: React.FC = () => {
                 </button>
                 
                 {isMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
                         <button 
                             onClick={() => { handleJumpToToday(); setIsMenuOpen(false); }}
                             className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -844,7 +792,7 @@ export const App: React.FC = () => {
                             onClick={() => { setIsPendingRequestsModalOpen(true); setIsMenuOpen(false); }}
                             className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
                         >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 whitespace-nowrap">
                                 <Clock size={16} />
                                 Pending Requests
                             </div>
@@ -960,6 +908,10 @@ export const App: React.FC = () => {
                         setSelectedDate(new Date(event.start));
                         setEventModalSource(source);
                         setIsEventModalOpen(true);
+                    }}
+                    onDataChange={() => {
+                        
+                        
                     }}
                 />
             </div>

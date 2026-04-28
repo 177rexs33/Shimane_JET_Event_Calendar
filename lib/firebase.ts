@@ -13,6 +13,9 @@ import {
 } from "firebase/auth";
 import { 
   getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   collection, 
   addDoc, 
   onSnapshot, 
@@ -104,7 +107,9 @@ if (!getApps().length) {
 
 // Initialize Auth with browser local persistence
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
 
 // Set persistence but don't block auth listener
 setPersistence(auth, browserLocalPersistence).catch((error) => {
@@ -175,13 +180,39 @@ export const getPendingRequestsCount = async (): Promise<number> => {
   }
 };
 
-export const getEventsForMonth = async (startISO: string, endISO: string): Promise<CalendarEvent[]> => {
+export const listenToEventsForMonth = (
+  currentMonthStart: string, 
+  currentMonthEnd: string,
+  onUpdate: (events: CalendarEvent[]) => void,
+  onError: (error: Error) => void
+) => {
+  const q = query(
+    collection(db, "events"), 
+    where("status", "==", "approved"),
+    where("start", ">=", currentMonthStart),
+    where("start", "<=", currentMonthEnd)
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const events: CalendarEvent[] = [];
+    snapshot.forEach((snapshotDoc) => {
+      const data = snapshotDoc.data();
+      events.push({ ...data, id: snapshotDoc.id } as CalendarEvent);
+    });
+    onUpdate(events);
+  }, (error) => {
+    handleFirestoreError(error, OperationType.LIST, "events");
+    onError(error as Error);
+  });
+};
+
+export const getEventsForMonth = async (currentMonthStart: string, currentMonthEnd: string): Promise<CalendarEvent[]> => {
   try {
     const q = query(
       collection(db, "events"), 
       where("status", "==", "approved"),
-      where("start", ">=", startISO),
-      where("start", "<=", endISO)
+      where("start", ">=", currentMonthStart),
+      where("start", "<=", currentMonthEnd)
     );
     const snapshot = await getDocs(q);
     const events: CalendarEvent[] = [];
