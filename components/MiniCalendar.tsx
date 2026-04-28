@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { generateCalendarGrid, MONTH_NAMES, WEEK_DAYS, isSameDay } from '../utils/dateUtils';
+import { generateCalendarGrid, MONTH_NAMES, WEEK_DAYS, isSameDay, getEnglishHolidayName, getCustomHoliday, isCustomHoliday } from '../utils/dateUtils';
 
 interface MiniCalendarProps {
   initialDate: Date;
@@ -58,7 +58,8 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ initialDate, onSelec
             const isToday = isSameDay(cell.date, new Date());
             
             const dateString = `${cell.date.getFullYear()}-${String(cell.date.getMonth() + 1).padStart(2, '0')}-${String(cell.date.getDate()).padStart(2, '0')}`;
-            const holidayName = holidays ? holidays[dateString] : undefined;
+            const holidayName = holidays ? (holidays[dateString] || getCustomHoliday(dateString)) : getCustomHoliday(dateString);
+            const isCustom = holidayName ? isCustomHoliday(holidayName) : false;
             
             let baseColorClasses = !cell.isCurrentMonth ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-100';
             let holidayClasses = '';
@@ -67,21 +68,21 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ initialDate, onSelec
 
             if (holidayName) {
                 if (!cell.isCurrentMonth) {
-                    baseColorClasses = 'text-red-300 bg-red-50/50';
+                    baseColorClasses = isCustom ? 'text-orange-300 bg-orange-50/50' : 'text-red-300 bg-red-50/50';
                 } else {
-                    baseColorClasses = 'text-red-600 bg-red-50 hover:bg-red-100';
+                    baseColorClasses = isCustom ? 'text-orange-600 bg-orange-50 hover:bg-orange-100' : 'text-red-600 bg-red-50 hover:bg-red-100';
                 }
             }
 
             if (isSelected) {
                 if (holidayName) {
-                    selectedClasses = 'bg-red-600 text-white hover:bg-red-700 shadow-sm ring-2 ring-red-200 ring-offset-1';
+                    selectedClasses = isCustom ? 'bg-orange-600 text-white hover:bg-orange-700 shadow-sm ring-2 ring-orange-200 ring-offset-1' : 'bg-red-600 text-white hover:bg-red-700 shadow-sm ring-2 ring-red-200 ring-offset-1';
                 } else {
                     selectedClasses = 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm ring-2 ring-blue-200 ring-offset-1';
                 }
             } else if (isToday) {
                 if (holidayName) {
-                    todayClasses = 'font-bold ring-2 ring-red-400 text-red-700';
+                    todayClasses = isCustom ? 'font-bold ring-2 ring-orange-400 text-orange-700' : 'font-bold ring-2 ring-red-400 text-red-700';
                 } else {
                     todayClasses = 'text-blue-600 font-semibold bg-blue-50 ring-1 ring-blue-200';
                 }
@@ -91,7 +92,7 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ initialDate, onSelec
                 <button
                     key={idx}
                     type="button"
-                    title={holidayName}
+                    title={holidayName ? getEnglishHolidayName(holidayName) : undefined}
                     onClick={(e) => {
                         e.stopPropagation();
                         onSelectDate(cell.date);

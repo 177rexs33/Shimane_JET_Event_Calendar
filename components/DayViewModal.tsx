@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal } from './Modal';
 import { CalendarEvent } from '../types';
-import { getRegionClasses, formatTime, isEventActiveOnDate, getEnglishHolidayName } from '../utils/dateUtils';
+import { getRegionClasses, formatTime, isEventActiveOnDate, getEnglishHolidayName, isCustomHoliday } from '../utils/dateUtils';
 import { Clock, Repeat, List, Calendar as CalendarIcon, MapPin, Plus } from 'lucide-react';
 
 interface DayViewModalProps {
@@ -31,18 +31,22 @@ export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, dat
 
   if (!date) return null;
 
-  const title = (
-    <div className="flex items-start justify-between min-w-0 pr-4">
+  const title = (() => {
+    const isCustom = holidayName ? isCustomHoliday(holidayName) : false;
+    return (
+    <div className="flex items-start justify-between min-w-0 h-full w-full">
       <div className="flex flex-col min-w-0">
         <span className="truncate">{date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
         {holidayName && (
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded-md border border-red-200 shrink-0">
+          <div className="flex flex-col items-start gap-1 mt-1 w-full whitespace-normal">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border self-start text-left leading-tight break-words max-w-full ${isCustom ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
               {holidayName}
             </span>
-            <span className="text-xs font-medium text-red-600 truncate">
-              {getEnglishHolidayName(holidayName)}
-            </span>
+            {getEnglishHolidayName(holidayName) !== holidayName && (
+              <span className={`text-xs font-medium text-left leading-tight break-words max-w-full ${isCustom ? 'text-orange-600' : 'text-red-600'}`}>
+                {getEnglishHolidayName(holidayName)}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -65,7 +69,8 @@ export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, dat
         )}
       </div>
     </div>
-  );
+    );
+  })();
 
   // 60 pixels per hour
   const HOUR_HEIGHT = 60;

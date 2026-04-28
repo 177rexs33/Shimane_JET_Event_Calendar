@@ -12,7 +12,9 @@ import {
     getRegionClasses,
     getRegionDotClass,
     getEnglishHolidayName,
-    sortEventTypes
+    sortEventTypes,
+    getCustomHoliday,
+    isCustomHoliday
 } from './utils/dateUtils';
 import { EventModal } from './components/EventModal';
 import { MonthYearSelector } from './components/MonthYearSelector';
@@ -441,7 +443,8 @@ export const App: React.FC = () => {
           const month = String(cell.date.getMonth() + 1).padStart(2, '0');
           const day = String(cell.date.getDate()).padStart(2, '0');
           const dateString = `${year}-${month}-${day}`;
-          const holidayName = showNationalHolidays ? holidays[dateString] : undefined;
+          const holidayName = showNationalHolidays ? (holidays[dateString] || getCustomHoliday(dateString)) : undefined;
+          const isCustom = holidayName ? isCustomHoliday(holidayName) : false;
 
           return (
             <div key={index} id={`event-day-${dateString}`} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -452,7 +455,7 @@ export const App: React.FC = () => {
                     <span className="text-lg font-bold leading-none">{cell.date.getDate()}</span>
                   </div>
                   {holidayName && (
-                    <span className="text-xs font-medium px-2 py-1 bg-red-50 text-red-600 rounded-md border border-red-100">
+                    <span className={`text-xs font-medium px-2 py-1 rounded-md border ${isCustom ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
                       {getEnglishHolidayName(holidayName)}
                     </span>
                   )}
@@ -507,7 +510,7 @@ export const App: React.FC = () => {
     const month = String(selectedDayViewDate.getMonth() + 1).padStart(2, '0');
     const day = String(selectedDayViewDate.getDate()).padStart(2, '0');
     const dateString = `${year}-${month}-${day}`;
-    return holidays[dateString];
+    return holidays[dateString] || getCustomHoliday(dateString);
   }, [selectedDayViewDate, showNationalHolidays, holidays]);
 
   const exportToICS = () => {
@@ -989,7 +992,8 @@ export const App: React.FC = () => {
                                 const month = String(cell.date.getMonth() + 1).padStart(2, '0');
                                 const day = String(cell.date.getDate()).padStart(2, '0');
                                 const dateString = `${year}-${month}-${day}`;
-                                const holidayName = showNationalHolidays ? holidays[dateString] : undefined;
+                                const holidayName = showNationalHolidays ? (holidays[dateString] || getCustomHoliday(dateString)) : undefined;
+                                const isCustom = holidayName ? isCustomHoliday(holidayName) : false;
                                 
                                 // Get unique regions for mobile dots
                                 const uniqueRegions = Array.from(new Set(dayEvents.map(e => e.region))).slice(0, 4);
@@ -1011,7 +1015,7 @@ export const App: React.FC = () => {
                                     >
                                         <div className="flex justify-center md:justify-between items-start w-full">
                                             <div className="relative w-7 h-7 md:w-5 md:h-5 shrink-0 flex items-center justify-center">
-                                                <span className={`absolute inset-0 text-[13px] md:text-xs font-medium flex items-center justify-center rounded-full transition-opacity md:group-hover:opacity-0 ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? 'bg-red-600 text-white' : ''} ${!isToday && holidayName ? 'text-red-500 md:text-gray-700' : ''}`}>
+                                                <span className={`absolute inset-0 text-[13px] md:text-xs font-medium flex items-center justify-center rounded-full transition-opacity md:group-hover:opacity-0 ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? (isCustom ? 'bg-orange-600 text-white' : 'bg-red-600 text-white') : ''} ${!isToday && holidayName ? (isCustom ? 'text-orange-600 md:text-gray-700' : 'text-red-500 md:text-gray-700') : ''}`}>
                                                     {cell.date.getDate()}
                                                 </span>
                                                 <button onClick={(e) => { e.stopPropagation(); handleDateClick(cell.date); }} className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity bg-blue-100 text-blue-600 rounded-full hidden md:flex items-center justify-center cursor-pointer">
@@ -1020,12 +1024,14 @@ export const App: React.FC = () => {
                                             </div>
                                             {holidayName && (
                                                 <div className="hidden md:flex flex-col items-end ml-1 flex-1 overflow-hidden">
-                                                    <span className="text-[9px] font-semibold truncate w-full text-right leading-tight holiday-text">
+                                                    <span className={`text-[9px] font-semibold truncate w-full text-right leading-tight ${isCustom ? 'text-orange-600' : 'holiday-text'}`}>
                                                         {holidayName}
                                                     </span>
-                                                    <span className="text-[8px] opacity-75 truncate w-full text-right leading-tight holiday-text">
-                                                        {getEnglishHolidayName(holidayName)}
-                                                    </span>
+                                                    {getEnglishHolidayName(holidayName) !== holidayName && (
+                                                        <span className={`text-[8px] opacity-75 truncate w-full text-right leading-tight ${isCustom ? 'text-orange-600' : 'holiday-text'}`}>
+                                                            {getEnglishHolidayName(holidayName)}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

@@ -188,8 +188,30 @@ export const getRegionDotClass = (region: string) => {
     return 'bg-gray-500';
 };
 
+export const isCustomHoliday = (name: string): boolean => {
+    return ["New Year's Eve", "Christmas Eve", "Christmas Day", "Halloween", "七夕"].includes(name);
+};
+
+export const getCustomHoliday = (dateString: string): string | undefined => {
+    // dateString format is "YYYY-MM-DD"
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+        const md = `${parts[1]}-${parts[2]}`;
+        const map: Record<string, string> = {
+            '12-31': "New Year's Eve",
+            '12-24': "Christmas Eve",
+            '12-25': "Christmas Day",
+            '10-31': "Halloween",
+            '07-07': "七夕"
+        };
+        return map[md];
+    }
+    return undefined;
+};
+
 export const getEnglishHolidayName = (japaneseName: string): string => {
     const translations: Record<string, string> = {
+        "七夕": "Tanabata",
         "元日": "New Year's Day",
         "成人の日": "Coming of Age Day",
         "建国記念の日": "National Foundation Day",
