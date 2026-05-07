@@ -24,9 +24,10 @@ interface DateInputProps {
     inputRef?: React.RefObject<HTMLInputElement | null>; 
     onComplete?: () => void; 
     hasError?: boolean;
+    onFullWidthDetect?: () => void;
 }
 
-const DateInput: React.FC<DateInputProps> = ({ dateStr, onChange, onFocus, inputRef, onComplete, hasError }) => {
+const DateInput: React.FC<DateInputProps> = ({ dateStr, onChange, onFocus, inputRef, onComplete, hasError, onFullWidthDetect }) => {
     const [d, setD] = useState('');
     const [m, setM] = useState('');
     const [y, setY] = useState('');
@@ -56,8 +57,17 @@ const DateInput: React.FC<DateInputProps> = ({ dateStr, onChange, onFocus, input
         }
     };
 
+    const checkFullWidth = (val: string) => {
+        if (/[^\x00-\x7F]/.test(val)) {
+            if (onFullWidthDetect) onFullWidthDetect();
+            return true;
+        }
+        return false;
+    };
+
     const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let val = e.target.value;
+        if (checkFullWidth(val)) return;
         if (!/^\d*$/.test(val)) return;
         setD(val);
         updateDate(val, m, y);
@@ -66,6 +76,7 @@ const DateInput: React.FC<DateInputProps> = ({ dateStr, onChange, onFocus, input
 
     const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let val = e.target.value;
+        if (checkFullWidth(val)) return;
         if (!/^\d*$/.test(val)) return;
         setM(val);
         updateDate(d, val, y);
@@ -74,6 +85,7 @@ const DateInput: React.FC<DateInputProps> = ({ dateStr, onChange, onFocus, input
 
     const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let val = e.target.value;
+        if (checkFullWidth(val)) return;
         if (!/^\d*$/.test(val)) return;
         setY(val);
         updateDate(d, m, val);
@@ -151,9 +163,10 @@ interface TimeSelectProps {
     onComplete?: () => void;
     onBlur?: (val: string) => void;
     hasError?: boolean;
+    onFullWidthDetect?: () => void;
 }
 
-const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onComplete, onBlur, hasError }) => {
+const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onComplete, onBlur, hasError, onFullWidthDetect }) => {
     // Ensure we have defaults, split safely
     const [h = '', m = ''] = value ? value.split(':') : ['', ''];
     const minuteRef = useRef<HTMLInputElement>(null);
@@ -179,8 +192,17 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
         onChange(`${newH}:${newM}`);
     };
 
+    const checkFullWidth = (val: string) => {
+        if (/[^\x00-\x7F]/.test(val)) {
+            if (onFullWidthDetect) onFullWidthDetect();
+            return true;
+        }
+        return false;
+    };
+
     const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let val = e.target.value;
+        if (checkFullWidth(val)) return;
         if (!/^\d*$/.test(val)) return;
         setLocalH(val);
         updateTime(val, localM);
@@ -217,6 +239,7 @@ const TimeSelect: React.FC<TimeSelectProps> = ({ value, onChange, inputRef, onCo
 
     const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let val = e.target.value;
+        if (checkFullWidth(val)) return;
         if (!/^\d*$/.test(val)) return;
         setLocalM(val);
         updateTime(localH, val);
@@ -318,6 +341,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [formErrors, setFormErrors] = useState<{title?: boolean, startDate?: boolean, endDate?: boolean, type?: boolean, startTime?: boolean, endTime?: boolean, region?: boolean}>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isSuggestingEdit, setIsSuggestingEdit] = useState(false);
+  const [fullWidthWarning, setFullWidthWarning] = useState(false);
 
   const [activeDateField, setActiveDateField] = useState<'start' | 'end' | null>(null);
   const [calendarPos, setCalendarPos] = useState<'top' | 'bottom'>('bottom');
@@ -329,6 +353,16 @@ export const EventModal: React.FC<EventModalProps> = ({
   const endHourRef = useRef<HTMLInputElement>(null);
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const fullWidthTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerFullWidthWarning = () => {
+      setFullWidthWarning(true);
+      if (fullWidthTimeout.current) clearTimeout(fullWidthTimeout.current);
+      fullWidthTimeout.current = setTimeout(() => {
+          setFullWidthWarning(false);
+      }, 3000);
+  };
 
   useEffect(() => {
     const resizeTextarea = (ref: React.RefObject<HTMLTextAreaElement | null>) => {
@@ -679,7 +713,12 @@ export const EventModal: React.FC<EventModalProps> = ({
         <div className="grid grid-cols-1 gap-3">
              <div className="space-y-1">
                 <label className={`text-xs font-semibold uppercase tracking-wider ${formErrors.startDate ? 'text-red-500' : 'text-gray-500'}`}>Start *</label>
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 relative">
+                     {fullWidthWarning && (
+                        <div className="absolute -top-7 left-0 w-full sm:w-auto z-40 bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded shadow-sm border border-red-200">
+                            Please use half-width characters for dates and times.
+                        </div>
+                     )}
                      <div 
                         className={`relative group flex-grow flex items-center border rounded-lg h-10 pl-10 focus-within:ring-2 focus-within:ring-blue-500 transition-all ${
                             formErrors.startDate 
@@ -701,6 +740,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                             }}
                             onFocus={() => openCalendar('start')}
                             onComplete={() => isAllDay ? endDayInputRef.current?.focus() : startHourRef.current?.focus()}
+                            onFullWidthDetect={triggerFullWidthWarning}
                         />
                          {activeDateField === 'start' && (
                             <div className={`absolute left-0 z-50 ${calendarPos === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
@@ -725,6 +765,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                             inputRef={startHourRef}
                             onBlur={handleStartTimeBlur}
                             hasError={formErrors.startTime}
+                            onFullWidthDetect={triggerFullWidthWarning}
                         />
                      )}
                 </div>
@@ -754,6 +795,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                             onFocus={() => openCalendar('end')}
                             inputRef={endDayInputRef}
                             onComplete={() => !isAllDay && endHourRef.current?.focus()}
+                            onFullWidthDetect={triggerFullWidthWarning}
                         />
                         {activeDateField === 'end' && (
                             <div className={`absolute left-0 z-50 ${calendarPos === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
@@ -778,6 +820,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                                 }}
                                 inputRef={endHourRef}
                                 hasError={!!timeError || formErrors.endTime}
+                                onFullWidthDetect={triggerFullWidthWarning}
                             />
                             {timeError && (
                                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 w-max max-w-[200px]">
