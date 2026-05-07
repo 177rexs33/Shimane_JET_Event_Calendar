@@ -17,10 +17,10 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, event
   const filteredEvents = useMemo(() => {
     if (!searchQuery.trim()) return [];
     
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.normalize('NFKC').toLowerCase();
     return events.filter(event => 
       event.status === 'approved' && 
-      event.title.toLowerCase().includes(query)
+      event.title.normalize('NFKC').toLowerCase().includes(query)
     );
   }, [events, searchQuery]);
 
