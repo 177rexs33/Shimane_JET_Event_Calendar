@@ -19,6 +19,7 @@ import {
 } from '../lib/firebase';
 import { Check, X, MapPin, Calendar as CalendarIcon, Loader2, ArrowRight, RotateCcw, FileText, Clock, Edit3, LayoutList, History, Trash2, AlertCircle, Users, Activity, BarChart2 } from 'lucide-react';
 import { formatFriendlyDate, formatTime, getRegionClasses, sortEventTypes } from '../utils/dateUtils';
+import { EventDescription } from './EventDescription';
 
 type Tab = 'new' | 'edits' | 'pending_deleted' | 'rejected' | 'deleted';
 
@@ -374,7 +375,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent, onD
                                         <div className="min-w-0 w-full">
                                             <h3 className="text-lg font-bold text-gray-900 leading-tight break-words whitespace-normal">{event.title}</h3>
                                             {event.description && (
-                                                <p className="text-gray-600 text-sm mt-1 line-clamp-3 break-words whitespace-normal">{event.description}</p>
+                                                <div className="text-gray-600 text-sm mt-1 line-clamp-3 break-words whitespace-normal"><EventDescription text={event.description} /></div>
                                             )}
                                         </div>
 
@@ -525,14 +526,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent, onD
                                                 </div>
                                                 {changes.description ? (
                                                     <div className="space-y-2 text-sm">
-                                                        <div className="text-gray-900 break-words whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</div>
+                                                        <div className="text-gray-900 break-words whitespace-normal">{event.description ? <EventDescription text={event.description} /> : <span className="italic text-gray-400">No description</span>}</div>
                                                         <div className="pt-2 border-t border-amber-100 text-red-400 text-xs">
                                                             <span className="font-semibold uppercase text-red-300 mr-1">Previous:</span>
-                                                            <span className="opacity-70 break-words whitespace-normal">{original?.description || 'No description'}</span>
+                                                            <div className="opacity-70 break-words whitespace-normal">{original?.description ? <EventDescription text={original.description} /> : 'No description'}</div>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <p className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</p>
+                                                    <div className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal">{event.description ? <EventDescription text={event.description} /> : <span className="italic text-gray-400">No description</span>}</div>
                                                 )}
                                             </div>
 
@@ -653,7 +654,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent, onD
                                                     <FileText size={14} className="text-gray-400" />
                                                     <span className="text-xs font-semibold text-gray-500 uppercase">Description</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal">{event.description || <span className="italic text-gray-400">No description</span>}</p>
+                                                <div className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal">{event.description ? <EventDescription text={event.description} /> : <span className="italic text-gray-400">No description</span>}</div>
                                             </div>
 
                                             {/* Time */}
@@ -825,7 +826,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onEditEvent, onD
                                         <div className="min-w-0 w-full">
                                             <h3 className="text-lg font-bold text-gray-900 leading-tight break-words whitespace-normal">{event.title}</h3>
                                             {event.description && (
-                                                <p className="text-gray-600 text-sm mt-1 line-clamp-3 break-words whitespace-normal">{event.description}</p>
+                                                <div className="text-gray-600 text-sm mt-1 line-clamp-3 break-words whitespace-normal"><EventDescription text={event.description} /></div>
                                             )}
                                         </div>
 

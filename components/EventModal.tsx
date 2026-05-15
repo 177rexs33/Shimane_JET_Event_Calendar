@@ -5,6 +5,7 @@ import { CalendarEvent, Region, RecurrenceType, REGION_CITIES, EventCategory } f
 import { toDateString, toTimeString, sortEventTypes } from '../utils/dateUtils';
 import { Clock, MapPin, AlignLeft, Type, Calendar as CalendarIcon, Globe, ChevronDown, Repeat, Check, AlertCircle, Trash2 } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
+import { EventDescription } from './EventDescription';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -666,7 +667,7 @@ export const EventModal: React.FC<EventModalProps> = ({
             {description && (
               <div className="flex items-start gap-2 text-gray-700">
                 <AlignLeft size={18} className="text-gray-400 mt-0.5 shrink-0" />
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{description}</p>
+                <EventDescription text={description} className="text-sm" />
               </div>
             )}
           </div>

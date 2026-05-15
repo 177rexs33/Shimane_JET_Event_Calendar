@@ -4,6 +4,7 @@ import { CalendarEvent } from '../types';
 import { getPendingEvents, getEditedEvents, getPendingDeletedEvents } from '../lib/firebase';
 import { Clock, Edit3, Trash2, Calendar as CalendarIcon, MapPin, Loader2 } from 'lucide-react';
 import { formatTime, getRegionClasses, sortEventTypes } from '../utils/dateUtils';
+import { EventDescription } from './EventDescription';
 
 interface PendingRequestsModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export const PendingRequestsModal: React.FC<PendingRequestsModalProps> = ({ isOp
 
       {event.description && (
         <div className="mt-3 pt-3 border-t border-gray-100 min-w-0 w-full">
-          <p className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal">{event.description}</p>
+          <div className="text-sm text-gray-600 line-clamp-3 break-words whitespace-normal"><EventDescription text={event.description} /></div>
         </div>
       )}
     </div>
