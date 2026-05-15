@@ -403,7 +403,7 @@ export const App: React.FC = () => {
                     <span className="text-lg font-bold leading-none">{cell.date.getDate()}</span>
                   </div>
                   {holidayName && (
-                    <span className={`text-xs font-medium px-2 py-1 rounded-md border ${isCustom ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-md border ${isCustom ? 'bg-pink-50 text-pink-600 border-pink-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
                       {getEnglishHolidayName(holidayName)}
                     </span>
                   )}
@@ -962,12 +962,12 @@ export const App: React.FC = () => {
                                             transition-all md:hover:shadow-md flex flex-col md:gap-0.5 group cursor-pointer items-center md:items-stretch justify-start
                                             ${!cell.isCurrentMonth ? 'md:bg-gray-50/50 text-gray-300 md:text-gray-400' : 'text-gray-700'}
                                             ${isToday ? 'md:ring-2 md:ring-blue-500 md:ring-offset-2' : ''}
-                                            ${holidayName ? 'holiday' : ''}
+                                            ${holidayName ? (isCustom ? 'custom-holiday' : 'holiday') : ''}
                                         `}
                                     >
                                         <div className="flex justify-center md:justify-between items-start w-full">
                                             <div className="relative w-7 h-7 md:w-5 md:h-5 shrink-0 flex items-center justify-center">
-                                                <span className={`absolute inset-0 text-[13px] md:text-xs font-medium flex items-center justify-center rounded-full transition-opacity md:group-hover:opacity-0 ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? (isCustom ? 'bg-orange-600 text-white' : 'bg-red-600 text-white') : ''} ${!isToday && holidayName ? (isCustom ? 'text-orange-600 md:text-gray-700' : 'text-red-500 md:text-gray-700') : ''}`}>
+                                                <span className={`absolute inset-0 text-[13px] md:text-xs font-medium flex items-center justify-center rounded-full transition-opacity md:group-hover:opacity-0 ${isToday && !holidayName ? 'bg-blue-600 text-white' : ''} ${isToday && holidayName ? (isCustom ? 'bg-pink-600 text-white' : 'bg-red-600 text-white') : ''} ${!isToday && holidayName ? (isCustom ? 'text-pink-600 md:text-gray-700' : 'text-red-500 md:text-gray-700') : ''}`}>
                                                     {cell.date.getDate()}
                                                 </span>
                                                 <button onClick={(e) => { e.stopPropagation(); handleDateClick(cell.date); }} className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity bg-blue-100 text-blue-600 rounded-full hidden md:flex items-center justify-center cursor-pointer">
@@ -976,11 +976,11 @@ export const App: React.FC = () => {
                                             </div>
                                             {holidayName && (
                                                 <div className="hidden md:flex flex-col items-end ml-1 flex-1 overflow-hidden">
-                                                    <span className={`text-[9px] font-semibold truncate w-full text-right leading-tight ${isCustom ? 'text-orange-600' : 'holiday-text'}`}>
+                                                    <span className={`text-[9px] font-semibold truncate w-full text-right leading-tight ${isCustom ? 'text-pink-600' : 'holiday-text'}`}>
                                                         {holidayName}
                                                     </span>
                                                     {getEnglishHolidayName(holidayName) !== holidayName && (
-                                                        <span className={`text-[8px] opacity-75 truncate w-full text-right leading-tight ${isCustom ? 'text-orange-600' : 'holiday-text'}`}>
+                                                        <span className={`text-[8px] opacity-75 truncate w-full text-right leading-tight ${isCustom ? 'text-pink-600' : 'holiday-text'}`}>
                                                             {getEnglishHolidayName(holidayName)}
                                                         </span>
                                                     )}

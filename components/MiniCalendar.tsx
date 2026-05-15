@@ -68,21 +68,21 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ initialDate, onSelec
 
             if (holidayName) {
                 if (!cell.isCurrentMonth) {
-                    baseColorClasses = isCustom ? 'text-orange-300 bg-orange-50/50' : 'text-red-300 bg-red-50/50';
+                    baseColorClasses = isCustom ? 'text-pink-300 bg-pink-50/50' : 'text-red-300 bg-red-50/50';
                 } else {
-                    baseColorClasses = isCustom ? 'text-orange-600 bg-orange-50 hover:bg-orange-100' : 'text-red-600 bg-red-50 hover:bg-red-100';
+                    baseColorClasses = isCustom ? 'text-pink-600 bg-pink-50 hover:bg-pink-100' : 'text-red-600 bg-red-50 hover:bg-red-100';
                 }
             }
 
             if (isSelected) {
                 if (holidayName) {
-                    selectedClasses = isCustom ? 'bg-orange-600 text-white hover:bg-orange-700 shadow-sm ring-2 ring-orange-200 ring-offset-1' : 'bg-red-600 text-white hover:bg-red-700 shadow-sm ring-2 ring-red-200 ring-offset-1';
+                    selectedClasses = isCustom ? 'bg-pink-600 text-white hover:bg-pink-700 shadow-sm ring-2 ring-pink-200 ring-offset-1' : 'bg-red-600 text-white hover:bg-red-700 shadow-sm ring-2 ring-red-200 ring-offset-1';
                 } else {
                     selectedClasses = 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm ring-2 ring-blue-200 ring-offset-1';
                 }
             } else if (isToday) {
                 if (holidayName) {
-                    todayClasses = isCustom ? 'font-bold ring-2 ring-orange-400 text-orange-700' : 'font-bold ring-2 ring-red-400 text-red-700';
+                    todayClasses = isCustom ? 'font-bold ring-2 ring-pink-400 text-pink-700' : 'font-bold ring-2 ring-red-400 text-red-700';
                 } else {
                     todayClasses = 'text-blue-600 font-semibold bg-blue-50 ring-1 ring-blue-200';
                 }

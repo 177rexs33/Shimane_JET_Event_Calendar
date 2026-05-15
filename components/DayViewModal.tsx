@@ -39,11 +39,11 @@ export const DayViewModal: React.FC<DayViewModalProps> = ({ isOpen, onClose, dat
         <span className="truncate">{date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
         {holidayName && (
           <div className="flex flex-col items-start gap-1 mt-1 w-full whitespace-normal">
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border self-start text-left leading-tight break-words max-w-full ${isCustom ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border self-start text-left leading-tight break-words max-w-full ${isCustom ? 'bg-pink-100 text-pink-700 border-pink-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
               {holidayName}
             </span>
             {getEnglishHolidayName(holidayName) !== holidayName && (
-              <span className={`text-xs font-medium text-left leading-tight break-words max-w-full ${isCustom ? 'text-orange-600' : 'text-red-600'}`}>
+              <span className={`text-xs font-medium text-left leading-tight break-words max-w-full ${isCustom ? 'text-pink-600' : 'text-red-600'}`}>
                 {getEnglishHolidayName(holidayName)}
               </span>
             )}
